@@ -8,12 +8,12 @@ export default function GithubApp() {
         {/* Sidebar */}
         <div className="flex flex-col gap-4 md:w-1/4 shrink-0">
           <img 
-            src="https://avatars.githubusercontent.com/u/12345678?v=4" 
+            src="https://github.com/24f3003771.png" 
             onError={(e) => {
               (e.target as HTMLImageElement).src = "https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png";
             }}
             alt="Ishaan Jha"
-            className="w-48 h-48 rounded-full border border-[#30363d] z-10 relative"
+            className="w-48 h-48 rounded-full border border-[#30363d] z-10 relative object-cover"
           />
           <div>
             <h1 className="text-2xl font-bold text-white">Ishaan Jha</h1>
@@ -22,14 +22,26 @@ export default function GithubApp() {
           <button className="w-full bg-[#21262d] hover:bg-[#30363d] border border-[#363b42] rounded-md py-1.5 font-medium transition-colors text-sm">
             Follow
           </button>
-          <div className="text-sm mt-2 text-white">
-            Building at the intersection of AI, product, startups, and business execution.
+          
+          <div className="flex flex-col gap-1 text-sm mt-2">
+            <div className="flex items-center gap-2"><Users size={16} className="text-[#8b949e]" /> <span className="text-white font-bold">7</span> followers · <span className="text-white font-bold">3</span> following</div>
           </div>
-          <div className="flex flex-col gap-1 text-sm mt-4">
-            <div className="flex items-center gap-2"><Users size={16} className="text-[#8b949e]" /> <span className="text-white font-bold">12</span> followers · <span className="text-white font-bold">15</span> following</div>
-            <div className="flex items-center gap-2 mt-2"><Building size={16} className="text-[#8b949e]" /> Indian Institute of Management</div>
-            <div className="flex items-center gap-2"><MapPin size={16} className="text-[#8b949e]" /> Bengaluru, India</div>
-            <div className="flex items-center gap-2"><LinkIcon size={16} className="text-[#8b949e]" /> <a href="https://dbeos.in" className="hover:text-blue-400 hover:underline">dbeos.in</a></div>
+          
+          <div className="mt-4 pt-4 border-t border-[#21262d]">
+            <h3 className="text-sm font-semibold text-white mb-2">Achievements</h3>
+            <div className="flex gap-2">
+              <img src="https://github.githubassets.com/assets/pull-shark-default-498c279a747d.png" alt="Pull Shark" className="w-14 h-14" />
+              <img src="https://github.githubassets.com/assets/yolo-default-be03fd961922.png" alt="YOLO" className="w-14 h-14" />
+              <img src="https://github.githubassets.com/assets/quickdraw-default-39c6aec83c31.png" alt="Quickdraw" className="w-14 h-14" />
+            </div>
+          </div>
+
+          <div className="mt-4 pt-4 border-t border-[#21262d]">
+            <h3 className="text-sm font-semibold text-white mb-2">Highlights</h3>
+            <div className="flex items-center gap-1">
+              <Star size={16} className="text-[#8b949e]" />
+              <span className="border border-purple-500 text-purple-400 text-xs px-2 py-0.5 rounded-full font-semibold">PRO</span>
+            </div>
           </div>
         </div>
 
@@ -109,29 +121,29 @@ export default function GithubApp() {
             <h3 className="text-sm font-semibold mb-3">Pinned</h3>
             <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
               
-              <div className="border border-[#30363d] rounded-md p-4 flex flex-col gap-2 bg-[#0d1117]">
-                <div className="flex items-center gap-2 text-[#58a6ff] font-semibold">
+              <a href="https://github.com/24f3003771/DBE-OS" target="_blank" rel="noreferrer" className="border border-[#30363d] rounded-md p-4 flex flex-col gap-2 bg-[#0d1117] hover:border-[#8b949e] transition-colors cursor-pointer group">
+                <div className="flex items-center gap-2 text-[#58a6ff] font-semibold group-hover:underline">
                   <GitBranch size={16} /> DBE-OS
                 </div>
                 <p className="text-sm text-[#8b949e]">The core operating system interface built for DBE.</p>
                 <div className="flex items-center gap-4 text-xs text-[#8b949e] mt-auto">
                   <div className="flex items-center gap-1"><div className="w-3 h-3 rounded-full bg-yellow-400"></div> JavaScript</div>
-                  <div className="flex items-center gap-1 hover:text-blue-400 cursor-pointer"><Star size={14} /> 12</div>
-                  <div className="flex items-center gap-1 hover:text-blue-400 cursor-pointer"><GitBranch size={14} /> 2</div>
+                  <div className="flex items-center gap-1"><Star size={14} /> 12</div>
+                  <div className="flex items-center gap-1"><GitBranch size={14} /> 2</div>
                 </div>
-              </div>
+              </a>
 
-              <div className="border border-[#30363d] rounded-md p-4 flex flex-col gap-2 bg-[#0d1117]">
-                <div className="flex items-center gap-2 text-[#58a6ff] font-semibold">
+              <a href="https://github.com/24f3003771/Nova-Unplugged" target="_blank" rel="noreferrer" className="border border-[#30363d] rounded-md p-4 flex flex-col gap-2 bg-[#0d1117] hover:border-[#8b949e] transition-colors cursor-pointer group">
+                <div className="flex items-center gap-2 text-[#58a6ff] font-semibold group-hover:underline">
                   <GitBranch size={16} /> Nova-Unplugged
                 </div>
                 <p className="text-sm text-[#8b949e]">Event management and scheduling application.</p>
                 <div className="flex items-center gap-4 text-xs text-[#8b949e] mt-auto">
                   <div className="flex items-center gap-1"><div className="w-3 h-3 rounded-full bg-blue-500"></div> TypeScript</div>
-                  <div className="flex items-center gap-1 hover:text-blue-400 cursor-pointer"><Star size={14} /> 8</div>
-                  <div className="flex items-center gap-1 hover:text-blue-400 cursor-pointer"><GitBranch size={14} /> 1</div>
+                  <div className="flex items-center gap-1"><Star size={14} /> 8</div>
+                  <div className="flex items-center gap-1"><GitBranch size={14} /> 1</div>
                 </div>
-              </div>
+              </a>
 
             </div>
           </div>
