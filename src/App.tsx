@@ -52,7 +52,7 @@ const APPS: Record<string, { title: string; component: ReactNode }> = {
   },
 };
 
-const bgAudio = typeof window !== 'undefined' ? new Audio("/bg.mp3") : null;
+export const bgAudio = typeof window !== 'undefined' ? new Audio("/bg.mp3") : null;
 if (bgAudio) {
   bgAudio.loop = true;
   bgAudio.volume = 0.4;
@@ -60,7 +60,7 @@ if (bgAudio) {
 }
 
 let audioCtx: AudioContext | null = null;
-const playClick = () => {
+export const playClick = () => {
   if (typeof window === 'undefined') return;
   if (!audioCtx) {
     const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;

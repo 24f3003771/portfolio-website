@@ -1,5 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { bgAudio, playClick } from "../App";
 import { 
   Wifi, 
   Bluetooth, 
@@ -25,7 +26,45 @@ export default function ControlCenter({ isOpen, onClose }: ControlCenterProps) {
   const [airdrop, setAirdrop] = useState(true);
   const [dnd, setDnd] = useState(false);
   const [display, setDisplay] = useState(80);
-  const [sound, setSound] = useState(60);
+  const [sound, setSound] = useState(40);
+  const [isPlaying, setIsPlaying] = useState(false);
+
+  useEffect(() => {
+    if (!bgAudio) return;
+    const updatePlayState = () => setIsPlaying(!bgAudio.paused);
+    const updateVolume = () => setSound(Math.round(bgAudio.volume * 100));
+
+    bgAudio.addEventListener('play', updatePlayState);
+    bgAudio.addEventListener('pause', updatePlayState);
+    bgAudio.addEventListener('volumechange', updateVolume);
+
+    setIsPlaying(!bgAudio.paused);
+    setSound(Math.round(bgAudio.volume * 100));
+
+    return () => {
+      bgAudio.removeEventListener('play', updatePlayState);
+      bgAudio.removeEventListener('pause', updatePlayState);
+      bgAudio.removeEventListener('volumechange', updateVolume);
+    };
+  }, []);
+
+  const togglePlay = () => {
+    playClick();
+    if (!bgAudio) return;
+    if (bgAudio.paused) {
+      bgAudio.play().catch(e => console.error(e));
+    } else {
+      bgAudio.pause();
+    }
+  };
+
+  const handleVolumeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const vol = Number(e.target.value);
+    setSound(vol);
+    if (bgAudio) {
+      bgAudio.volume = vol / 100;
+    }
+  };
 
   return (
     <AnimatePresence>
@@ -88,13 +127,15 @@ export default function ControlCenter({ isOpen, onClose }: ControlCenterProps) {
                 </div>
 
                 {/* Now Playing */}
-                <div className="flex-1 glass bg-white/10 rounded-2xl p-3 flex flex-col items-center justify-center relative overflow-hidden group cursor-pointer shadow-inner">
+                <div className="flex-1 glass bg-white/10 rounded-2xl p-3 flex flex-col items-center justify-center relative overflow-hidden shadow-inner">
                   <div className="absolute inset-0 bg-gradient-to-br from-purple-500/30 to-blue-500/30 opacity-50"></div>
-                  <span className="text-xs font-semibold z-10 mb-2">Not Playing</span>
+                  <span className="text-xs font-semibold z-10 mb-2">{isPlaying ? "Ambient Music" : "Not Playing"}</span>
                   <div className="flex gap-4 z-10 text-white/80">
-                    <SkipBack size={20} className="hover:text-white transition-colors" />
-                    <Play size={20} className="hover:text-white transition-colors" />
-                    <SkipForward size={20} className="hover:text-white transition-colors" />
+                    <SkipBack size={20} className="hover:text-white transition-colors cursor-pointer" onClick={playClick} />
+                    <div onClick={togglePlay} className="cursor-pointer hover:text-white transition-colors">
+                      {isPlaying ? <span className="font-bold text-sm leading-none flex items-center justify-center w-5 h-5">II</span> : <Play size={20} />}
+                    </div>
+                    <SkipForward size={20} className="hover:text-white transition-colors cursor-pointer" onClick={playClick} />
                   </div>
                 </div>
               </div>
@@ -142,7 +183,7 @@ export default function ControlCenter({ isOpen, onClose }: ControlCenterProps) {
                       type="range" 
                       min="0" max="100" 
                       value={sound}
-                      onChange={(e) => setSound(Number(e.target.value))}
+                      onChange={handleVolumeChange}
                       className="w-full h-1 bg-white/20 rounded-lg appearance-none cursor-pointer outline-none [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:bg-white [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:shadow-md"
                     />
                   </div>
