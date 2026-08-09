@@ -5,6 +5,7 @@ import Dock from "./components/Dock";
 import Window from "./components/Window";
 import Widgets from "./components/Widgets";
 import DesktopIcons from "./components/DesktopIcons";
+import BootSequence from "./components/BootSequence";
 
 // Apps Content
 import AboutMe from "./apps/AboutMe";
@@ -90,6 +91,7 @@ export const playClick = () => {
 };
 
 function App() {
+  const [hasBooted, setHasBooted] = useState(false);
   const [openWindows, setOpenWindows] = useState<AppWindow[]>([]);
   const [activeWindow, setActiveWindow] = useState<string | null>(null);
   const [minimizedWindows, setMinimizedWindows] = useState<string[]>([]);
@@ -118,28 +120,26 @@ function App() {
   };
 
   useEffect(() => {
-    const handleFirstClick = () => {
-      if (bgAudio && bgAudio.paused) {
-        bgAudio.play().catch(e => console.error("Audio autoplay blocked:", e));
-      }
-    };
-
-    document.addEventListener("click", handleFirstClick);
     document.addEventListener("click", playClick);
 
     return () => {
-      document.removeEventListener("click", handleFirstClick);
       document.removeEventListener("click", playClick);
     };
   }, []);
 
   return (
     <div
-      className="w-screen h-screen overflow-hidden bg-cover bg-center"
+      className="w-screen h-screen overflow-hidden bg-cover bg-center relative"
       style={{
         backgroundImage: "url('https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=2564&auto=format&fit=crop')",
       }}
     >
+      <AnimatePresence>
+        {!hasBooted && (
+          <BootSequence onComplete={() => setHasBooted(true)} />
+        )}
+      </AnimatePresence>
+
       <TopBar />
       
       <div className="relative w-full h-full pt-7 pb-16">
