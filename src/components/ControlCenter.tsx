@@ -31,20 +31,21 @@ export default function ControlCenter({ isOpen, onClose }: ControlCenterProps) {
 
   useEffect(() => {
     if (!bgAudio) return;
-    const updatePlayState = () => setIsPlaying(!bgAudio.paused);
-    const updateVolume = () => setSound(Math.round(bgAudio.volume * 100));
+    const audio = bgAudio;
+    const updatePlayState = () => setIsPlaying(!audio.paused);
+    const updateVolume = () => setSound(Math.round(audio.volume * 100));
 
-    bgAudio.addEventListener('play', updatePlayState);
-    bgAudio.addEventListener('pause', updatePlayState);
-    bgAudio.addEventListener('volumechange', updateVolume);
+    audio.addEventListener('play', updatePlayState);
+    audio.addEventListener('pause', updatePlayState);
+    audio.addEventListener('volumechange', updateVolume);
 
-    setIsPlaying(!bgAudio.paused);
-    setSound(Math.round(bgAudio.volume * 100));
+    setIsPlaying(!audio.paused);
+    setSound(Math.round(audio.volume * 100));
 
     return () => {
-      bgAudio.removeEventListener('play', updatePlayState);
-      bgAudio.removeEventListener('pause', updatePlayState);
-      bgAudio.removeEventListener('volumechange', updateVolume);
+      audio.removeEventListener('play', updatePlayState);
+      audio.removeEventListener('pause', updatePlayState);
+      audio.removeEventListener('volumechange', updateVolume);
     };
   }, []);
 
