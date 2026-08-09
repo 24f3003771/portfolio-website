@@ -16,9 +16,10 @@ import {
 
 interface ControlCenterProps {
   isOpen: boolean;
+  onClose: () => void;
 }
 
-export default function ControlCenter({ isOpen }: ControlCenterProps) {
+export default function ControlCenter({ isOpen, onClose }: ControlCenterProps) {
   const [wifi, setWifi] = useState(true);
   const [bluetooth, setBluetooth] = useState(true);
   const [airdrop, setAirdrop] = useState(true);
@@ -29,13 +30,17 @@ export default function ControlCenter({ isOpen }: ControlCenterProps) {
   return (
     <AnimatePresence>
       {isOpen && (
-        <motion.div
-          initial={{ opacity: 0, scale: 0.95, y: -10, filter: "blur(10px)" }}
-          animate={{ opacity: 1, scale: 1, y: 0, filter: "blur(0px)" }}
-          exit={{ opacity: 0, scale: 0.95, y: -10, filter: "blur(10px)" }}
-          transition={{ type: "spring", bounce: 0, duration: 0.2 }}
-          className="fixed top-9 right-2 w-[320px] p-4 glass bg-black/40 border border-white/20 rounded-3xl shadow-2xl z-40 text-white select-none backdrop-blur-2xl"
-        >
+        <>
+          {/* Invisible backdrop to catch clicks outside */}
+          <div className="fixed inset-0 z-40" onClick={onClose} />
+          
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95, y: -10, filter: "blur(10px)" }}
+            animate={{ opacity: 1, scale: 1, y: 0, filter: "blur(0px)" }}
+            exit={{ opacity: 0, scale: 0.95, y: -10, filter: "blur(10px)" }}
+            transition={{ type: "spring", bounce: 0, duration: 0.2 }}
+            className="fixed top-9 right-2 w-[320px] p-4 glass bg-black/40 border border-white/20 rounded-3xl shadow-2xl z-50 text-white select-none backdrop-blur-2xl"
+          >
             <div className="flex flex-col gap-3">
               {/* Top Section: Connectivity & Now Playing */}
               <div className="flex gap-3 h-32">
@@ -145,6 +150,7 @@ export default function ControlCenter({ isOpen }: ControlCenterProps) {
               </div>
             </div>
           </motion.div>
+        </>
       )}
     </AnimatePresence>
   );

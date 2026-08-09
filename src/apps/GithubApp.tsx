@@ -1,4 +1,4 @@
-import { MapPin, Users, Building, Link as LinkIcon, Star, GitBranch, BookOpen } from "lucide-react";
+import { Users, Star, GitBranch, BookOpen } from "lucide-react";
 
 export default function GithubApp() {
   return (

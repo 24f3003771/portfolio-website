@@ -7,7 +7,7 @@ export default function TopBar() {
   const [time, setTime] = useState("");
   const [activeMenu, setActiveMenu] = useState<string | null>(null);
   const [showSpotlight, setShowSpotlight] = useState(false);
-  const [showControlCenter, setShowControlCenter] = useState(true);
+  const [showControlCenter, setShowControlCenter] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -43,7 +43,7 @@ export default function TopBar() {
 
   return (
     <>
-      <div className="h-7 w-full bg-black/40 backdrop-blur-md text-white/90 flex items-center justify-between px-4 text-xs font-medium fixed top-0 z-50">
+      <div className="w-full h-8 bg-black/40 backdrop-blur-md text-white flex items-center justify-between px-4 text-xs font-medium z-50 fixed top-0 select-none border-b border-white/10">
         <div className="flex items-center gap-4">
           <div className="relative group">
             <Apple size={14} className="hover:text-white cursor-pointer" onClick={() => toggleMenu("apple")} />
@@ -111,7 +111,7 @@ export default function TopBar() {
         </div>
       </div>
       
-      <ControlCenter isOpen={showControlCenter} />
+      <ControlCenter isOpen={showControlCenter} onClose={() => setShowControlCenter(false)} />
 
       {/* Spotlight Search Overlay */}
       <AnimatePresence>
