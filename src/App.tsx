@@ -81,32 +81,55 @@ function App() {
   };
 
   useEffect(() => {
-    // Background Ambient Audio (Calm, looping)
-    const bgAudio = new Audio("https://cdn.pixabay.com/audio/2022/05/27/audio_1808fbf07a.mp3"); // Calm ambient pads
+    // Background Ambient Audio (local file)
+    const bgAudio = new Audio("/bg.mp3");
     bgAudio.loop = true;
     bgAudio.volume = 0.4;
     
-    // Click sound effect
-    const clickAudio = new Audio("https://assets.mixkit.co/sfx/preview/mixkit-modern-technology-select-3124.mp3");
-    clickAudio.volume = 0.5;
+    // Web Audio API for instantaneous click sounds
+    let audioCtx: AudioContext | null = null;
+
+    const playClick = () => {
+      if (!audioCtx) {
+        const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
+        if (AudioContextClass) audioCtx = new AudioContextClass();
+      }
+      if (!audioCtx) return;
+      
+      if (audioCtx.state === 'suspended') {
+        audioCtx.resume();
+      }
+
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(800, audioCtx.currentTime);
+      osc.frequency.exponentialRampToValueAtTime(300, audioCtx.currentTime + 0.05);
+      
+      gain.gain.setValueAtTime(0.15, audioCtx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.05);
+      
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+      
+      osc.start();
+      osc.stop(audioCtx.currentTime + 0.05);
+    };
 
     const handleFirstClick = () => {
       bgAudio.play().catch(() => console.log("Audio autoplay blocked"));
       document.removeEventListener("click", handleFirstClick);
     };
 
-    const handleGlobalClick = () => {
-      clickAudio.currentTime = 0;
-      clickAudio.play().catch(() => {});
-    };
-
     document.addEventListener("click", handleFirstClick);
-    document.addEventListener("click", handleGlobalClick);
+    document.addEventListener("click", playClick);
 
     return () => {
       bgAudio.pause();
       document.removeEventListener("click", handleFirstClick);
-      document.removeEventListener("click", handleGlobalClick);
+      document.removeEventListener("click", playClick);
+      if (audioCtx) audioCtx.close();
     };
   }, []);
 
