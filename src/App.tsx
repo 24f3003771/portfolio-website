@@ -52,6 +52,43 @@ const APPS: Record<string, { title: string; component: ReactNode }> = {
   },
 };
 
+const bgAudio = typeof window !== 'undefined' ? new Audio("/bg.mp3") : null;
+if (bgAudio) {
+  bgAudio.loop = true;
+  bgAudio.volume = 0.4;
+  bgAudio.preload = "auto";
+}
+
+let audioCtx: AudioContext | null = null;
+const playClick = () => {
+  if (typeof window === 'undefined') return;
+  if (!audioCtx) {
+    const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
+    if (AudioContextClass) audioCtx = new AudioContextClass();
+  }
+  if (!audioCtx) return;
+  
+  if (audioCtx.state === 'suspended') {
+    audioCtx.resume();
+  }
+
+  const osc = audioCtx.createOscillator();
+  const gain = audioCtx.createGain();
+  
+  osc.type = 'sine';
+  osc.frequency.setValueAtTime(800, audioCtx.currentTime);
+  osc.frequency.exponentialRampToValueAtTime(300, audioCtx.currentTime + 0.05);
+  
+  gain.gain.setValueAtTime(0.15, audioCtx.currentTime);
+  gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.05);
+  
+  osc.connect(gain);
+  gain.connect(audioCtx.destination);
+  
+  osc.start();
+  osc.stop(audioCtx.currentTime + 0.05);
+};
+
 function App() {
   const [openWindows, setOpenWindows] = useState<AppWindow[]>([]);
   const [activeWindow, setActiveWindow] = useState<string | null>(null);
@@ -81,55 +118,18 @@ function App() {
   };
 
   useEffect(() => {
-    // Background Ambient Audio (local file)
-    const bgAudio = new Audio("/bg.mp3");
-    bgAudio.loop = true;
-    bgAudio.volume = 0.4;
-    
-    // Web Audio API for instantaneous click sounds
-    let audioCtx: AudioContext | null = null;
-
-    const playClick = () => {
-      if (!audioCtx) {
-        const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
-        if (AudioContextClass) audioCtx = new AudioContextClass();
-      }
-      if (!audioCtx) return;
-      
-      if (audioCtx.state === 'suspended') {
-        audioCtx.resume();
-      }
-
-      const osc = audioCtx.createOscillator();
-      const gain = audioCtx.createGain();
-      
-      osc.type = 'sine';
-      osc.frequency.setValueAtTime(800, audioCtx.currentTime);
-      osc.frequency.exponentialRampToValueAtTime(300, audioCtx.currentTime + 0.05);
-      
-      gain.gain.setValueAtTime(0.15, audioCtx.currentTime);
-      gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.05);
-      
-      osc.connect(gain);
-      gain.connect(audioCtx.destination);
-      
-      osc.start();
-      osc.stop(audioCtx.currentTime + 0.05);
-    };
-
     const handleFirstClick = () => {
-      bgAudio.play().catch(() => console.log("Audio autoplay blocked"));
-      document.removeEventListener("click", handleFirstClick);
+      if (bgAudio && bgAudio.paused) {
+        bgAudio.play().catch(e => console.error("Audio autoplay blocked:", e));
+      }
     };
 
     document.addEventListener("click", handleFirstClick);
     document.addEventListener("click", playClick);
 
     return () => {
-      bgAudio.pause();
       document.removeEventListener("click", handleFirstClick);
       document.removeEventListener("click", playClick);
-      if (audioCtx) audioCtx.close();
     };
   }, []);
 
