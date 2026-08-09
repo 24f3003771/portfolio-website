@@ -55,16 +55,28 @@ const APPS: Record<string, { title: string; component: ReactNode }> = {
 function App() {
   const [openWindows, setOpenWindows] = useState<AppWindow[]>([]);
   const [activeWindow, setActiveWindow] = useState<string | null>(null);
+  const [minimizedWindows, setMinimizedWindows] = useState<string[]>([]);
 
   const openApp = (id: string) => {
     if (!openWindows.find((w) => w.id === id)) {
       setOpenWindows([...openWindows, { id, ...APPS[id] }]);
+    }
+    if (minimizedWindows.includes(id)) {
+      setMinimizedWindows(minimizedWindows.filter(wId => wId !== id));
     }
     setActiveWindow(id);
   };
 
   const closeApp = (id: string) => {
     setOpenWindows(openWindows.filter((w) => w.id !== id));
+    setMinimizedWindows(minimizedWindows.filter(wId => wId !== id));
+    if (activeWindow === id) setActiveWindow(null);
+  };
+
+  const minimizeApp = (id: string) => {
+    if (!minimizedWindows.includes(id)) {
+      setMinimizedWindows([...minimizedWindows, id]);
+    }
     if (activeWindow === id) setActiveWindow(null);
   };
 
@@ -87,7 +99,9 @@ function App() {
               id={win.id}
               title={win.title}
               onClose={closeApp}
+              onMinimize={minimizeApp}
               isActive={activeWindow === win.id}
+              isMinimized={minimizedWindows.includes(win.id)}
               onClick={() => setActiveWindow(win.id)}
             >
               {win.component}

@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { Smile, FileText, Compass, Terminal, GitBranch, Briefcase, Mail, Globe, Calendar } from "lucide-react";
+import { Smile, FileText, Compass, Terminal, Mail, Globe, Calendar } from "lucide-react";
 
 export interface AppConfig {
   id: string;
