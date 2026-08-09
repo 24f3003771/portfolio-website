@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { AnimatePresence } from "framer-motion";
 import TopBar from "./components/TopBar";
 import Dock from "./components/Dock";
@@ -80,6 +80,36 @@ function App() {
     if (activeWindow === id) setActiveWindow(null);
   };
 
+  useEffect(() => {
+    // Background Ambient Audio (Calm, looping)
+    const bgAudio = new Audio("https://cdn.pixabay.com/audio/2022/05/27/audio_1808fbf07a.mp3"); // Calm ambient pads
+    bgAudio.loop = true;
+    bgAudio.volume = 0.4;
+    
+    // Click sound effect
+    const clickAudio = new Audio("https://assets.mixkit.co/sfx/preview/mixkit-modern-technology-select-3124.mp3");
+    clickAudio.volume = 0.5;
+
+    const handleFirstClick = () => {
+      bgAudio.play().catch(() => console.log("Audio autoplay blocked"));
+      document.removeEventListener("click", handleFirstClick);
+    };
+
+    const handleGlobalClick = () => {
+      clickAudio.currentTime = 0;
+      clickAudio.play().catch(() => {});
+    };
+
+    document.addEventListener("click", handleFirstClick);
+    document.addEventListener("click", handleGlobalClick);
+
+    return () => {
+      bgAudio.pause();
+      document.removeEventListener("click", handleFirstClick);
+      document.removeEventListener("click", handleGlobalClick);
+    };
+  }, []);
+
   return (
     <div
       className="w-screen h-screen overflow-hidden bg-cover bg-center"
@@ -110,7 +140,7 @@ function App() {
         </AnimatePresence>
       </div>
 
-      <Dock onOpen={openApp} />
+      <Dock onOpen={openApp} openWindows={openWindows.map(w => w.id)} />
     </div>
   );
 }
