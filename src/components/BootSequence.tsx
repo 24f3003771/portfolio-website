@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Power, Command } from "lucide-react";
-import { bgAudio, playClick } from "../App";
+import { playClick, playBgAudio } from "../App";
 
 interface BootSequenceProps {
   onComplete: () => void;
@@ -13,9 +13,7 @@ export default function BootSequence({ onComplete }: BootSequenceProps) {
 
   const handlePowerClick = () => {
     playClick();
-    if (bgAudio) {
-      bgAudio.play().catch(e => console.error("Audio play failed:", e));
-    }
+    playBgAudio();
     setStep('booting');
   };
 

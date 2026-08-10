@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { bgAudio, playClick } from "../App";
+import { bgAudio, playClick, playBgAudio } from "../App";
 import { 
   Wifi, 
   Bluetooth, 
@@ -53,7 +53,7 @@ export default function ControlCenter({ isOpen, onClose }: ControlCenterProps) {
     playClick();
     if (!bgAudio) return;
     if (bgAudio.paused) {
-      bgAudio.play().catch(e => console.error(e));
+      playBgAudio();
     } else {
       bgAudio.pause();
     }

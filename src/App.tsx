@@ -53,12 +53,29 @@ const APPS: Record<string, { title: string; component: ReactNode }> = {
   },
 };
 
-export const bgAudio = typeof window !== 'undefined' ? new Audio("/bg.mp3") : null;
+const getAudioPath = () => {
+  const base = import.meta.env.BASE_URL || '/';
+  const cleanBase = base.endsWith('/') ? base : `${base}/`;
+  return `${cleanBase}bg.mp3`;
+};
+
+export const bgAudio = typeof window !== 'undefined' ? new Audio(getAudioPath()) : null;
 if (bgAudio) {
   bgAudio.loop = true;
   bgAudio.volume = 0.4;
   bgAudio.preload = "auto";
+  bgAudio.setAttribute('playsinline', 'true');
+  bgAudio.setAttribute('webkit-playsinline', 'true');
 }
+
+export const playBgAudio = () => {
+  if (!bgAudio) return;
+  if (bgAudio.paused) {
+    bgAudio.play().catch((e) => {
+      console.log("Audio play postponed until user interaction:", e);
+    });
+  }
+};
 
 let audioCtx: AudioContext | null = null;
 export const playClick = () => {
@@ -120,9 +137,29 @@ function App() {
   };
 
   useEffect(() => {
+    // Attempt playback on load (if allowed by browser policy)
+    playBgAudio();
+
+    // Universal interaction handler to auto-start audio on first user gesture anywhere
+    const handleUserInteraction = () => {
+      playBgAudio();
+      if (audioCtx && audioCtx.state === 'suspended') {
+        audioCtx.resume();
+      }
+    };
+
+    window.addEventListener("click", handleUserInteraction, { capture: true });
+    window.addEventListener("touchstart", handleUserInteraction, { capture: true });
+    window.addEventListener("pointerdown", handleUserInteraction, { capture: true });
+    window.addEventListener("keydown", handleUserInteraction, { capture: true });
+
     document.addEventListener("click", playClick);
 
     return () => {
+      window.removeEventListener("click", handleUserInteraction, { capture: true });
+      window.removeEventListener("touchstart", handleUserInteraction, { capture: true });
+      window.removeEventListener("pointerdown", handleUserInteraction, { capture: true });
+      window.removeEventListener("keydown", handleUserInteraction, { capture: true });
       document.removeEventListener("click", playClick);
     };
   }, []);
