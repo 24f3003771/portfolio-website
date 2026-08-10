@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { bgAudio, playClick, playBgAudio } from "../App";
+import { bgAudio, playClick, playBgAudio, setBgAudioVolume } from "../utils/audio";
 import { 
   Wifi, 
   Bluetooth, 
@@ -62,9 +62,7 @@ export default function ControlCenter({ isOpen, onClose }: ControlCenterProps) {
   const handleVolumeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const vol = Number(e.target.value);
     setSound(vol);
-    if (bgAudio) {
-      bgAudio.volume = vol / 100;
-    }
+    setBgAudioVolume(vol / 100);
   };
 
   return (

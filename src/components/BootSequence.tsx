@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Power, Command } from "lucide-react";
-import { playClick, playBgAudio } from "../App";
+import { playBootChime, playClick, playBgAudio } from "../utils/audio";
 
 interface BootSequenceProps {
   onComplete: () => void;
@@ -12,6 +12,7 @@ export default function BootSequence({ onComplete }: BootSequenceProps) {
   const [progress, setProgress] = useState(0);
 
   const handlePowerClick = () => {
+    playBootChime();
     playClick();
     playBgAudio();
     setStep('booting');

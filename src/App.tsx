@@ -53,59 +53,7 @@ const APPS: Record<string, { title: string; component: ReactNode }> = {
   },
 };
 
-const getAudioPath = () => {
-  const base = import.meta.env.BASE_URL || '/';
-  const cleanBase = base.endsWith('/') ? base : `${base}/`;
-  return `${cleanBase}bg.mp3`;
-};
-
-export const bgAudio = typeof window !== 'undefined' ? new Audio(getAudioPath()) : null;
-if (bgAudio) {
-  bgAudio.loop = true;
-  bgAudio.volume = 0.4;
-  bgAudio.preload = "auto";
-  bgAudio.setAttribute('playsinline', 'true');
-  bgAudio.setAttribute('webkit-playsinline', 'true');
-}
-
-export const playBgAudio = () => {
-  if (!bgAudio) return;
-  if (bgAudio.paused) {
-    bgAudio.play().catch((e) => {
-      console.log("Audio play postponed until user interaction:", e);
-    });
-  }
-};
-
-let audioCtx: AudioContext | null = null;
-export const playClick = () => {
-  if (typeof window === 'undefined') return;
-  if (!audioCtx) {
-    const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
-    if (AudioContextClass) audioCtx = new AudioContextClass();
-  }
-  if (!audioCtx) return;
-  
-  if (audioCtx.state === 'suspended') {
-    audioCtx.resume();
-  }
-
-  const osc = audioCtx.createOscillator();
-  const gain = audioCtx.createGain();
-  
-  osc.type = 'sine';
-  osc.frequency.setValueAtTime(800, audioCtx.currentTime);
-  osc.frequency.exponentialRampToValueAtTime(300, audioCtx.currentTime + 0.05);
-  
-  gain.gain.setValueAtTime(0.15, audioCtx.currentTime);
-  gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.05);
-  
-  osc.connect(gain);
-  gain.connect(audioCtx.destination);
-  
-  osc.start();
-  osc.stop(audioCtx.currentTime + 0.05);
-};
+import { playClick, playBgAudio, initAudioUnlock } from "./utils/audio";
 
 function App() {
   const [hasBooted, setHasBooted] = useState(false);
@@ -137,29 +85,16 @@ function App() {
   };
 
   useEffect(() => {
-    // Attempt playback on load (if allowed by browser policy)
+    // Attempt playback on load if allowed
     playBgAudio();
 
-    // Universal interaction handler to auto-start audio on first user gesture anywhere
-    const handleUserInteraction = () => {
-      playBgAudio();
-      if (audioCtx && audioCtx.state === 'suspended') {
-        audioCtx.resume();
-      }
-    };
-
-    window.addEventListener("click", handleUserInteraction, { capture: true });
-    window.addEventListener("touchstart", handleUserInteraction, { capture: true });
-    window.addEventListener("pointerdown", handleUserInteraction, { capture: true });
-    window.addEventListener("keydown", handleUserInteraction, { capture: true });
+    // Attach global user gesture listener to unlock audio & Web Audio API context on first click/tap/keypress
+    const cleanupUnlock = initAudioUnlock();
 
     document.addEventListener("click", playClick);
 
     return () => {
-      window.removeEventListener("click", handleUserInteraction, { capture: true });
-      window.removeEventListener("touchstart", handleUserInteraction, { capture: true });
-      window.removeEventListener("pointerdown", handleUserInteraction, { capture: true });
-      window.removeEventListener("keydown", handleUserInteraction, { capture: true });
+      cleanupUnlock();
       document.removeEventListener("click", playClick);
     };
   }, []);
