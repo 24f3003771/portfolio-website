@@ -1,0 +1,21 @@
+# Robots.txt for Ishaan Jha Portfolio OS (ishaanjha.mybuildspace.in)
+User-agent: *
+Allow: /
+
+# Allow AI Search Crawlers for Generative Search Indexing
+User-agent: GPTBot
+Allow: /
+
+User-agent: ChatGPT-User
+Allow: /
+
+User-agent: PerplexityBot
+Allow: /
+
+User-agent: ClaudeBot
+Allow: /
+
+User-agent: Google-Extended
+Allow: /
+
+Sitemap: https://ishaanjha.mybuildspace.in/sitemap.xml
