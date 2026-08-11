@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { Smile, FileText, Compass, Terminal, Mail, Globe, Calendar } from "lucide-react";
+import { Smile, FileText, Compass, Terminal, Mail, Globe, Calendar, Code } from "lucide-react";
 
 export interface AppConfig {
   id: string;
@@ -18,17 +18,17 @@ export const APPS_CONFIG: AppConfig[] = [
     inDock: true
   },
   { 
+    id: "terminal", 
+    name: "Terminal", 
+    icon: <Terminal size={28} className="text-white" />,
+    bgClass: "bg-gradient-to-br from-gray-800 to-black border border-gray-700",
+    inDock: true
+  },
+  { 
     id: "safari", 
     name: "Projects", 
     icon: <Compass size={28} className="text-blue-500" />,
     bgClass: "bg-gradient-to-br from-gray-50 to-gray-200",
-    inDock: true
-  },
-  { 
-    id: "terminal", 
-    name: "Skills", 
-    icon: <Terminal size={28} className="text-white" />,
-    bgClass: "bg-gradient-to-br from-gray-800 to-black border border-gray-700",
     inDock: true
   },
   {
@@ -37,6 +37,13 @@ export const APPS_CONFIG: AppConfig[] = [
     icon: <Mail size={28} className="text-white" />,
     bgClass: "bg-gradient-to-br from-cyan-400 to-blue-500",
     inDock: true
+  },
+  {
+    id: "skills",
+    name: "Skills",
+    icon: <Code size={28} className="text-white" />,
+    bgClass: "bg-gradient-to-br from-emerald-500 to-teal-700",
+    inDock: false
   },
   { 
     id: "notes", 

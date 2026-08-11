@@ -12,6 +12,7 @@ import AboutMe from "./apps/AboutMe";
 import Experience from "./apps/Experience";
 import Projects from "./apps/Projects";
 import Skills from "./apps/Skills";
+import WelcomeTerminal from "./apps/WelcomeTerminal";
 import IframeApp from "./apps/IframeApp";
 import GithubApp from "./apps/GithubApp";
 import LinkedinApp from "./apps/LinkedinApp";
@@ -25,10 +26,11 @@ interface AppWindow {
 }
 
 const APPS: Record<string, { title: string; component: ReactNode }> = {
+  terminal: { title: "Terminal - zsh", component: <WelcomeTerminal /> },
   finder: { title: "About Me - Ishaan Jha", component: <AboutMe /> },
   notes: { title: "Experience.txt", component: <Experience /> },
   safari: { title: "Projects", component: <Projects /> },
-  terminal: { title: "Skills", component: <Skills /> },
+  skills: { title: "Skills & Tech", component: <Skills /> },
   github: { 
     title: "GitHub - ishaanjha", 
     component: <GithubApp /> 
@@ -98,6 +100,13 @@ function App() {
       document.removeEventListener("click", playClick);
     };
   }, []);
+
+  // Auto open Welcome Terminal when user arrives on landing page
+  useEffect(() => {
+    if (hasBooted) {
+      openApp("terminal");
+    }
+  }, [hasBooted]);
 
   return (
     <div
