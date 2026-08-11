@@ -87,10 +87,7 @@ function App() {
   };
 
   useEffect(() => {
-    // Attempt playback on load if allowed
-    playBgAudio();
-
-    // Attach global user gesture listener to unlock audio & Web Audio API context on first click/tap/keypress
+    // Attach global user gesture listener to unlock AudioContext on first click/tap/keypress
     const cleanupUnlock = initAudioUnlock();
 
     document.addEventListener("click", playClick);
@@ -101,10 +98,11 @@ function App() {
     };
   }, []);
 
-  // Auto open Welcome Terminal when user arrives on landing page
+  // Auto open Welcome Terminal and start ambient music when user arrives on landing page
   useEffect(() => {
     if (hasBooted) {
       openApp("terminal");
+      playBgAudio();
     }
   }, [hasBooted]);
 

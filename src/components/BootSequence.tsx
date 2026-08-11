@@ -14,7 +14,6 @@ export default function BootSequence({ onComplete }: BootSequenceProps) {
   const handlePowerClick = () => {
     playBootChime();
     playClick();
-    playBgAudio();
     setStep('booting');
   };
 
@@ -32,6 +31,7 @@ export default function BootSequence({ onComplete }: BootSequenceProps) {
         if (currentStep >= steps) {
           clearInterval(timer);
           setTimeout(() => {
+            playBgAudio(); // Start ambient audio right after boot chime finishes
             onComplete();
           }, 400); // slight pause after 100%
         }

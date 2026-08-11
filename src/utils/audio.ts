@@ -136,13 +136,12 @@ export const setBgAudioVolume = (vol: number) => {
   bgAudio.volume = Math.max(0, Math.min(1, vol));
 };
 
-// Universal listener to unlock audio on first user touch/click/keypress anywhere on site
+// Universal listener to unlock AudioContext on first user touch/click/keypress anywhere on site
 export const initAudioUnlock = () => {
   if (typeof window === 'undefined') return () => {};
 
   const handleUnlock = () => {
     getAudioContext();
-    playBgAudio();
   };
 
   window.addEventListener('click', handleUnlock, { capture: true });
