@@ -18,8 +18,13 @@ export default function Window({ id, title, children, onClose, onMinimize, isAct
   const [isMaximized, setIsMaximized] = useState(false);
   return (
     <motion.div
-      drag={!isMaximized}
-      dragConstraints={{ left: 0, right: typeof window !== 'undefined' ? window.innerWidth - 600 : 0, top: 0, bottom: typeof window !== 'undefined' ? window.innerHeight - 400 : 0 }}
+      drag={!isMaximized && typeof window !== 'undefined' && window.innerWidth >= 640}
+      dragConstraints={{ 
+        left: 0, 
+        right: typeof window !== 'undefined' ? Math.max(0, window.innerWidth - 800) : 0, 
+        top: 0, 
+        bottom: typeof window !== 'undefined' ? Math.max(0, window.innerHeight - 500) : 0 
+      }}
       dragElastic={0}
       dragMomentum={false}
       initial={{ scale: 0.9, opacity: 0 }}
@@ -36,7 +41,7 @@ export default function Window({ id, title, children, onClose, onMinimize, isAct
       exit={{ scale: 0.9, opacity: 0 }}
       onClick={onClick}
       className={`absolute flex flex-col bg-white/90 backdrop-blur-xl shadow-2xl overflow-hidden border border-white/20 
-        ${isMaximized ? 'w-full h-[calc(100vh-2rem)] top-8 left-0 rounded-none' : 'sm:w-[800px] sm:h-[500px] w-full h-[calc(100%-2rem)] top-8 sm:top-10 left-0 sm:left-20 rounded-xl'} 
+        ${isMaximized ? 'w-full h-[calc(100vh-2rem)] top-8 left-0 rounded-none' : 'w-full h-[calc(100%-6rem)] sm:w-[800px] sm:h-[500px] top-8 sm:top-10 left-0 sm:left-20 rounded-t-xl sm:rounded-xl'} 
         ${isActive ? 'ring-1 ring-blue-500/50' : ''}`}
     >
       <div className="h-8 w-full bg-white/10 backdrop-blur-md flex items-center px-3 border-b border-white/10 cursor-grab active:cursor-grabbing">

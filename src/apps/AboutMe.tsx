@@ -1,6 +1,6 @@
 export default function AboutMe() {
   return (
-    <div className="flex flex-col items-center justify-center h-full p-8 text-center space-y-6">
+    <div className="flex flex-col items-center justify-center h-full p-4 sm:p-8 text-center space-y-6">
       <div className="w-32 h-32 rounded-full overflow-hidden border-4 border-white/20 shadow-xl">
         <img 
           src="https://avatars.githubusercontent.com/u/100000000?v=4" 
