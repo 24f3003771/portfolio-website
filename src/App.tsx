@@ -41,7 +41,7 @@ const APPS: Record<string, { title: string; component: ReactNode }> = {
   },
   dbeos: { title: "DBE-OS", component: <IframeApp url="https://dbeos.in" /> },
   nova: { title: "Nova Unplugged", component: <IframeApp url="https://nova-unplugged.dbeos.in" /> },
-  cosmologia: { title: "Cosmologia - 3D Explorer", component: <IframeApp url="/cosmos.html" fallbackText="3D WebGL context initializing..." /> },
+  cosmologia: { title: "Cosmologia - 3D Explorer", component: <IframeApp url="/cosmos.html" /> },
   mail: { 
     title: "Mail", 
     component: (
