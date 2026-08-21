@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { Smile, FileText, Compass, Terminal, Mail, Globe, Calendar, Code } from "lucide-react";
+import { Smile, FileText, Compass, Terminal, Mail, Globe, Calendar, Code, Rocket } from "lucide-react";
 
 export interface AppConfig {
   id: string;
@@ -86,6 +86,13 @@ export const APPS_CONFIG: AppConfig[] = [
     name: "Nova Unplugged",
     icon: <Calendar size={28} className="text-white" />,
     bgClass: "bg-gradient-to-br from-orange-400 to-red-500",
+    inDock: false
+  },
+  {
+    id: "cosmologia",
+    name: "Cosmologia",
+    icon: <Rocket size={28} className="text-white" />,
+    bgClass: "bg-gradient-to-br from-indigo-700 to-purple-900 border border-indigo-500",
     inDock: false
   }
 ];
