@@ -1,0 +1,1432 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cosmologia — 3D Celestial Explorer</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500;600;700&family=Manrope:wght@200;300;400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+    "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+  }
+}
+</script>
+
+<style>
+:root {
+  --bg: #050608;
+  --bg-2: #0a0c10;
+  --bg-3: #11141a;
+  --fg: #f8fafc;
+  --fg-dim: #94a3b8;
+  --muted: #475569;
+  --accent: #3b82f6;
+  --accent-2: #8b5cf6;
+  --accent-3: #60a5fa;
+  --card: rgba(10, 12, 16, 0.65);
+  --border: rgba(59, 130, 246, 0.18);
+  --border-strong: rgba(59, 130, 246, 0.4);
+  --danger: #ef4444;
+  --success: #22c55e;
+}
+
+* { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; overflow: hidden; height: 100%; }
+body {
+  background: var(--bg);
+  color: var(--fg);
+  font-family: 'Manrope', sans-serif;
+  font-feature-settings: 'ss01', 'ss02';
+  -webkit-font-smoothing: antialiased;
+}
+
+.display-font { font-family: 'Cormorant Garamond', serif; }
+.mono { font-variant-numeric: tabular-nums; letter-spacing: 0.05em; }
+
+/* Background atmosphere */
+.atmosphere {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  background: 
+    radial-gradient(ellipse at 18% 25%, rgba(59, 130, 246, 0.10), transparent 55%),
+    radial-gradient(ellipse at 82% 75%, rgba(139, 92, 246, 0.07), transparent 55%),
+    radial-gradient(ellipse at 50% 100%, rgba(96, 165, 250, 0.04), transparent 60%),
+    linear-gradient(180deg, #050608 0%, #020203 100%);
+}
+.atmosphere::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='220' height='220'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2'/><feColorMatrix values='0 0 0 0 0.85  0 0 0 0 0.65  0 0 0 0 0.35  0 0 0 0.18 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+  opacity: 0.5;
+  mix-blend-mode: overlay;
+}
+
+.particles {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* Layout */
+.app-shell {
+  position: relative;
+  z-index: 10;
+  height: 100vh;
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  grid-template-columns: 320px 1fr 320px;
+  grid-template-areas:
+    "header header header"
+    "left center right"
+    "footer footer footer";
+}
+
+header.top-bar {
+  grid-area: header;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 28px;
+  border-bottom: 1px solid var(--border);
+  background: linear-gradient(to bottom, rgba(5,6,8,0.92), rgba(5,6,8,0.55));
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  z-index: 20;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+.brand-mark {
+  width: 42px; height: 42px;
+  border-radius: 50%;
+  background: 
+    radial-gradient(circle at 30% 25%, #d8e8f8, var(--accent) 45%, var(--accent-2) 85%);
+  display: grid;
+  place-items: center;
+  color: #ffffff;
+  font-family: 'Cormorant Garamond', serif;
+  font-weight: 700;
+  font-size: 24px;
+  box-shadow: 
+    0 6px 18px rgba(59,130,246,0.35),
+    inset 0 1px 0 rgba(255,255,255,0.4),
+    inset 0 -2px 4px rgba(0,0,0,0.2);
+  position: relative;
+}
+.brand-mark::after {
+  content: '';
+  position: absolute;
+  inset: 3px;
+  border-radius: 50%;
+  border: 1px solid rgba(255,255,255,0.15);
+}
+.brand-name {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 30px;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  line-height: 1;
+}
+.brand-sub {
+  font-size: 9px;
+  letter-spacing: 0.45em;
+  color: var(--muted);
+  text-transform: uppercase;
+  margin-top: 4px;
+}
+
+.live-clock {
+  display: flex;
+  align-items: center;
+  gap: 32px;
+}
+.time-block {
+  text-align: center;
+}
+.time-block .label {
+  font-size: 9px;
+  letter-spacing: 0.35em;
+  color: var(--muted);
+  text-transform: uppercase;
+  margin-bottom: 4px;
+}
+.time-block .value {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 26px;
+  font-weight: 400;
+  letter-spacing: 0.06em;
+  color: var(--fg);
+}
+.time-block .value .sep {
+  color: var(--accent);
+  animation: blink 1s steps(2) infinite;
+}
+@keyframes blink { 50% { opacity: 0.3; } }
+
+.ar-toggle {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 11px 20px;
+  border-radius: 999px;
+  background: linear-gradient(135deg, var(--accent), var(--accent-2));
+  color: #ffffff;
+  font-weight: 700;
+  font-size: 11px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  cursor: pointer;
+  border: none;
+  box-shadow: 0 6px 22px rgba(59,130,246,0.35), inset 0 1px 0 rgba(255,255,255,0.3);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.ar-toggle:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 30px rgba(59,130,246,0.5), inset 0 1px 0 rgba(255,255,255,0.4);
+}
+.ar-toggle.active {
+  background: linear-gradient(135deg, #ef4444, #991b1b);
+  color: #fff;
+}
+
+/* Sidebars */
+aside.panel {
+  background: var(--card);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border-right: 1px solid var(--border);
+  overflow-y: auto;
+  padding: 24px 22px 28px;
+}
+aside.left-panel { grid-area: left; }
+aside.right-panel { grid-area: right; border-right: none; border-left: 1px solid var(--border); }
+
+.panel::-webkit-scrollbar { width: 4px; }
+.panel::-webkit-scrollbar-track { background: transparent; }
+.panel::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+.panel::-webkit-scrollbar-thumb:hover { background: var(--accent); }
+
+.section { margin-bottom: 30px; }
+.section-title {
+  font-size: 10px;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 14px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 600;
+}
+.section-title i { font-size: 11px; }
+.section-title::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(to right, var(--border-strong), transparent);
+}
+
+/* List items */
+.strap-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.strap-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: rgba(10, 12, 16, 0.4);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.strap-item:hover {
+  border-color: var(--accent);
+  background: rgba(59,130,246,0.06);
+  transform: translateX(2px);
+}
+.strap-item.active {
+  border-color: var(--accent);
+  background: rgba(59,130,246,0.12);
+  box-shadow: inset 3px 0 0 var(--accent);
+}
+.strap-swatch {
+  width: 36px; height: 36px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  background-size: cover;
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,0.06), inset 0 2px 4px rgba(0,0,0,0.4);
+}
+.strap-name {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--fg);
+}
+.strap-tag {
+  font-size: 9px;
+  color: var(--muted);
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  margin-top: 2px;
+}
+
+/* Center canvas */
+.center-stage {
+  grid-area: center;
+  position: relative;
+  overflow: hidden;
+  background: transparent;
+}
+#mainCanvas {
+  width: 100%; height: 100%;
+  display: block;
+  cursor: grab;
+}
+#mainCanvas:active { cursor: grabbing; }
+#webcam {
+  position: absolute;
+  inset: 0;
+  width: 100%; height: 100%;
+  object-fit: cover;
+  z-index: 0;
+  display: none;
+  transform: scaleX(-1);
+}
+.center-stage.ar-active #webcam { display: block; }
+
+.center-stage::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse at center, transparent 30%, rgba(5,6,8,0.5) 100%);
+  pointer-events: none;
+  z-index: 2;
+}
+.center-stage.ar-active::before {
+  background: radial-gradient(ellipse at center, transparent 50%, rgba(5,6,8,0.3) 100%);
+}
+
+/* Floating UI */
+.viewport-hud {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 5;
+}
+.hud-corner {
+  position: absolute;
+  font-size: 10px;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: var(--fg-dim);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 500;
+}
+.hud-corner.tl { top: 20px; left: 24px; }
+.hud-corner.tr { top: 20px; right: 24px; }
+.hud-corner.bl { bottom: 24px; left: 24px; }
+.hud-corner.br { bottom: 24px; right: 24px; }
+.hud-corner i { color: var(--accent); font-size: 11px; }
+
+.compass-ring {
+  width: 18px; height: 18px;
+  border-radius: 50%;
+  border: 1px solid var(--border-strong);
+  position: relative;
+}
+.compass-ring::before {
+  content: '';
+  position: absolute;
+  top: -2px; left: 50%;
+  width: 2px; height: 4px;
+  background: var(--accent);
+  transform: translateX(-50%);
+  border-radius: 1px;
+}
+
+/* AR controls */
+.ar-controls {
+  position: absolute;
+  top: 64px;
+  right: 24px;
+  width: 260px;
+  padding: 18px 18px 16px;
+  background: rgba(10,12,16,0.85);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid var(--border-strong);
+  border-radius: 14px;
+  pointer-events: auto;
+  display: none;
+  z-index: 7;
+  box-shadow: 0 16px 50px rgba(0,0,0,0.5);
+}
+.center-stage.ar-active .ar-controls { display: block; animation: slideIn 0.4s; }
+@keyframes slideIn {
+  from { opacity: 0; transform: translateX(20px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+.ar-controls-title {
+  font-size: 10px;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: var(--accent-3);
+  margin-bottom: 14px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 600;
+}
+
+.ar-control-row {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 12px;
+}
+.ar-control-row label {
+  font-size: 9px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--fg-dim);
+  display: flex;
+  justify-content: space-between;
+  font-weight: 500;
+}
+.ar-control-row label span {
+  color: var(--accent);
+  font-family: 'Manrope', sans-serif;
+  font-variant-numeric: tabular-nums;
+}
+.ar-control-row input[type="range"] {
+  width: 100%;
+  height: 3px;
+  background: var(--bg-3);
+  border-radius: 2px;
+  outline: none;
+  -webkit-appearance: none;
+  appearance: none;
+}
+.ar-control-row input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 14px; height: 14px;
+  border-radius: 50%;
+  background: var(--accent);
+  cursor: pointer;
+  box-shadow: 0 0 0 3px var(--bg-2), 0 2px 8px rgba(59,130,246,0.5);
+  transition: transform 0.15s;
+}
+
+/* Right panel content */
+.spec-list {
+  display: flex;
+  flex-direction: column;
+}
+.spec-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  padding: 9px 0;
+  border-bottom: 1px solid var(--border);
+  font-size: 12px;
+}
+.spec-row:last-child { border-bottom: none; }
+.spec-row .k {
+  color: var(--muted);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  font-size: 10px;
+  font-weight: 500;
+}
+.spec-row .v {
+  color: var(--fg);
+  font-weight: 500;
+}
+.spec-row .v.accent { color: var(--accent-3); }
+
+.complication-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+.complication-list li {
+  display: flex;
+  justify-content: space-between;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--border);
+  font-size: 12px;
+}
+.complication-list li:last-child { border-bottom: none; }
+.complication-list .pos {
+  color: var(--accent-3);
+  font-weight: 600;
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 14px;
+}
+.complication-list .desc {
+  color: var(--fg-dim);
+}
+
+.price-block {
+  margin-top: 22px;
+  padding: 20px;
+  background: 
+    linear-gradient(135deg, rgba(59,130,246,0.12), rgba(59,130,246,0.02)),
+    linear-gradient(180deg, rgba(10,12,16,0.5), rgba(10,12,16,0.3));
+  border: 1px solid var(--border-strong);
+  border-radius: 14px;
+  position: relative;
+  overflow: hidden;
+}
+.price-block::before {
+  content: '';
+  position: absolute;
+  top: -50%; right: -30%;
+  width: 80%; height: 200%;
+  background: radial-gradient(ellipse, rgba(96,165,250,0.08), transparent 60%);
+  pointer-events: none;
+}
+.price-label {
+  font-size: 9px;
+  letter-spacing: 0.35em;
+  text-transform: uppercase;
+  color: var(--muted);
+  font-weight: 600;
+}
+.price-value {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 38px;
+  font-weight: 500;
+  color: var(--accent-3);
+  line-height: 1;
+  margin-top: 8px;
+  letter-spacing: 0.01em;
+}
+.price-note {
+  font-size: 9px;
+  color: var(--muted);
+  letter-spacing: 0.15em;
+  margin-top: 6px;
+  text-transform: uppercase;
+}
+
+/* Buttons */
+.btn {
+  width: 100%;
+  padding: 13px 16px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: rgba(10,12,16,0.4);
+  color: var(--fg);
+  font-family: 'Manrope', sans-serif;
+  font-size: 10px;
+  letter-spacing: 0.25em;
+  text-transform: uppercase;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+.btn:hover {
+  border-color: var(--accent);
+  background: rgba(59,130,246,0.08);
+  color: var(--accent-3);
+}
+.btn.primary {
+  background: linear-gradient(135deg, var(--accent), var(--accent-2));
+  color: #ffffff;
+  border-color: transparent;
+  font-weight: 700;
+}
+.btn.primary:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 8px 26px rgba(59,130,246,0.4);
+}
+
+footer.bottom-bar {
+  grid-area: footer;
+  padding: 11px 28px;
+  border-top: 1px solid var(--border);
+  background: rgba(5,6,8,0.7);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 10px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--muted);
+  z-index: 20;
+}
+
+.footer-status {
+  display: flex;
+  gap: 28px;
+  align-items: center;
+}
+.status-dot {
+  display: inline-block;
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: var(--success);
+  margin-right: 8px;
+  animation: pulse 2s infinite;
+}
+@keyframes pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(34,197,94,0.6); }
+  50% { box-shadow: 0 0 0 6px rgba(34,197,94,0); }
+}
+
+/* Toast */
+.toast-container {
+  position: fixed;
+  bottom: 90px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  pointer-events: none;
+}
+.toast {
+  background: rgba(10,12,16,0.95);
+  backdrop-filter: blur(20px);
+  border: 1px solid var(--border-strong);
+  border-left: 3px solid var(--accent);
+  padding: 12px 18px;
+  border-radius: 8px;
+  font-size: 12px;
+  letter-spacing: 0.05em;
+  color: var(--fg);
+  box-shadow: 0 12px 40px rgba(0,0,0,0.6);
+  animation: toastIn 0.35s cubic-bezier(0.4, 0, 0.2, 1), toastOut 0.35s 2.8s forwards;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 240px;
+}
+.toast i { color: var(--accent); }
+@keyframes toastIn {
+  from { opacity: 0; transform: translateY(15px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes toastOut {
+  to { opacity: 0; transform: translateY(-10px); }
+}
+
+/* Loading screen */
+.loading-screen {
+  position: fixed;
+  inset: 0;
+  background: var(--bg);
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 28px;
+  transition: opacity 0.8s, visibility 0.8s;
+}
+.loading-screen.done {
+  opacity: 0;
+  visibility: hidden;
+}
+.loader-mark {
+  width: 70px; height: 70px;
+  border: 1px solid var(--border);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spin 1.2s linear infinite;
+}
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+.loading-text {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 22px;
+  letter-spacing: 0.5em;
+  color: var(--accent);
+  font-weight: 300;
+}
+.loading-sub {
+  font-size: 9px;
+  letter-spacing: 0.4em;
+  color: var(--muted);
+  text-transform: uppercase;
+}
+
+/* Responsive */
+@media (max-width: 1180px) {
+  .app-shell { grid-template-columns: 280px 1fr 280px; }
+}
+@media (max-width: 980px) {
+  .app-shell {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto auto 1fr auto auto;
+    grid-template-areas:
+      "header"
+      "left"
+      "center"
+      "right"
+      "footer";
+  }
+  aside.panel { max-height: 220px; }
+  .live-clock { display: none; }
+}
+</style>
+</head>
+<body>
+
+<div class="atmosphere"></div>
+<canvas class="particles" id="particles"></canvas>
+
+<div class="loading-screen" id="loadingScreen">
+  <div class="loader-mark"></div>
+  <div style="text-align: center;">
+    <div class="loading-text">COSMOLOGIA</div>
+    <div class="loading-sub" style="margin-top: 8px;">Aligning Instruments</div>
+  </div>
+</div>
+
+<div class="app-shell">
+  <header class="top-bar">
+    <div class="brand">
+      <div class="brand-mark">C</div>
+      <div>
+        <div class="brand-name">Cosmologia</div>
+        <div class="brand-sub">Stellar Observatory · Est. MMXXIV</div>
+      </div>
+    </div>
+    
+    <div class="live-clock">
+      <div class="time-block">
+        <div class="label">Earth Time</div>
+        <div class="value mono" id="liveTimeValue">--<span class="sep">:</span>--<span class="sep">:</span>--</div>
+      </div>
+      <div class="time-block">
+        <div class="label">Earth Date</div>
+        <div class="value mono" id="liveDateValue">— —</div>
+      </div>
+    </div>
+    
+    <button class="ar-toggle" id="arToggle">
+      <i class="fas fa-camera"></i>
+      <span>View in AR Space</span>
+    </button>
+  </header>
+
+  <aside class="panel left-panel">
+    <div class="section">
+      <div class="section-title"><i class="fas fa-globe"></i> Celestial Bodies</div>
+      <div class="strap-list" id="planetList"></div>
+    </div>
+  </aside>
+
+  <div class="center-stage" id="centerStage">
+    <video id="webcam" autoplay playsinline muted></video>
+    <canvas id="mainCanvas"></canvas>
+    
+    <div class="viewport-hud">
+      <div class="hud-corner tl">
+        <i class="fas fa-cube"></i>
+        3D Viewport · Realtime
+      </div>
+      <div class="hud-corner tr">
+        <div class="compass-ring"></div>
+        <span id="orbitValue">000°</span>
+      </div>
+      <div class="hud-corner bl">
+        <i class="fas fa-arrows-spin"></i>
+        Drag to orbit · Scroll to zoom
+      </div>
+      <div class="hud-corner br" id="handState">
+        <i class="fas fa-circle" style="font-size: 6px; color: var(--success);"></i>
+        Tracking Active
+      </div>
+    </div>
+    
+    <div class="ar-controls">
+      <div class="ar-controls-title">
+        <i class="fas fa-camera-retro"></i>
+        AR View Controls
+      </div>
+      <div class="ar-control-row">
+        <label>Scale <span id="arScaleVal">0.85×</span></label>
+        <input type="range" id="arScale" min="0.2" max="2" step="0.02" value="0.85">
+      </div>
+      <div class="ar-control-row">
+        <label>Position X <span id="arXVal">0.00</span></label>
+        <input type="range" id="arX" min="-2" max="2" step="0.02" value="0">
+      </div>
+      <div class="ar-control-row">
+        <label>Position Y <span id="arYVal">0.00</span></label>
+        <input type="range" id="arY" min="-2" max="2" step="0.02" value="0">
+      </div>
+      <button class="btn primary" id="arSnapshot" style="margin-top: 6px;">
+        <i class="fas fa-camera"></i> Capture
+      </button>
+    </div>
+  </div>
+
+  <aside class="panel right-panel">
+    <div class="section">
+      <div class="section-title"><i class="fas fa-circle-info"></i> Planetary Metrics</div>
+      <div class="spec-list" id="specList"></div>
+    </div>
+    
+    <div class="section">
+      <div class="section-title"><i class="fas fa-cloud"></i> Atmosphere Composition</div>
+      <ul class="complication-list" id="atmosphereList">
+        <!-- populated dynamically -->
+      </ul>
+    </div>
+    
+    <div class="price-block">
+      <div class="price-label">Distance from Sun</div>
+      <div class="price-value" id="distValue">1.00 AU</div>
+      <div class="price-note">Astronomical Units</div>
+    </div>
+    
+    <div style="margin-top: 18px; display: flex; flex-direction: column; gap: 8px;">
+      <button class="btn primary" id="saveBtn">
+        <i class="fas fa-bookmark"></i> Bookmark Selection
+      </button>
+      <button class="btn" id="resetBtn">
+        <i class="fas fa-rotate-left"></i> Reset View
+      </button>
+    </div>
+  </aside>
+
+  <footer class="bottom-bar">
+    <div class="footer-status">
+      <span><span class="status-dot"></span>Sensors Nominal</span>
+      <span>WebGL 2 · Three.js r160</span>
+      <span id="fpsCounter">— FPS</span>
+    </div>
+    <div>
+      Ref <span id="configCode" style="color: var(--accent-3); font-weight: 600;">SYS-EAR-01</span>
+    </div>
+  </footer>
+</div>
+
+<div class="toast-container" id="toastContainer"></div>
+
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+// ===================== DATA =====================
+const PLANETS = [
+  { id: 'mercury', name: 'Mercury', tag: 'Terrestrial', color: 0x8c8c8c, scale: 1.2, 
+    specs: { mass: '0.055 M⊕', gravity: '3.7 m/s²', orbit: '88 Days', temp: '167°C', moons: 0, dist: '0.39 AU' },
+    atmosphere: [] },
+  { id: 'venus', name: 'Venus', tag: 'Terrestrial', color: 0xe6bd85, scale: 1.8, 
+    specs: { mass: '0.815 M⊕', gravity: '8.87 m/s²', orbit: '225 Days', temp: '464°C', moons: 0, dist: '0.72 AU' },
+    atmosphere: [ { name: 'Carbon Dioxide', val: '96.5%' }, { name: 'Nitrogen', val: '3.5%' } ] },
+  { id: 'earth', name: 'Earth', tag: 'Terrestrial', color: 0x2b82c9, scale: 1.9, 
+    specs: { mass: '1.000 M⊕', gravity: '9.8 m/s²', orbit: '365.2 Days', temp: '15°C', moons: 1, dist: '1.00 AU' },
+    atmosphere: [ { name: 'Nitrogen', val: '78.1%' }, { name: 'Oxygen', val: '20.9%' } ], hasClouds: true },
+  { id: 'mars', name: 'Mars', tag: 'Terrestrial', color: 0xc45335, scale: 1.4, 
+    specs: { mass: '0.107 M⊕', gravity: '3.71 m/s²', orbit: '687 Days', temp: '-65°C', moons: 2, dist: '1.52 AU' },
+    atmosphere: [ { name: 'Carbon Dioxide', val: '95.3%' }, { name: 'Nitrogen', val: '2.7%' } ] },
+  { id: 'jupiter', name: 'Jupiter', tag: 'Gas Giant', color: 0xc7a47b, scale: 3.5, 
+    specs: { mass: '317.8 M⊕', gravity: '24.79 m/s²', orbit: '11.8 Years', temp: '-110°C', moons: 95, dist: '5.20 AU' },
+    atmosphere: [ { name: 'Hydrogen', val: '89.8%' }, { name: 'Helium', val: '10.2%' } ], isGas: true },
+  { id: 'saturn', name: 'Saturn', tag: 'Gas Giant', color: 0xebd2a4, scale: 3.0, 
+    specs: { mass: '95.1 M⊕', gravity: '10.44 m/s²', orbit: '29.4 Years', temp: '-140°C', moons: 146, dist: '9.58 AU' },
+    atmosphere: [ { name: 'Hydrogen', val: '96.3%' }, { name: 'Helium', val: '3.2%' } ], isGas: true, hasRings: true },
+  { id: 'uranus', name: 'Uranus', tag: 'Ice Giant', color: 0xa9dce0, scale: 2.4, 
+    specs: { mass: '14.5 M⊕', gravity: '8.69 m/s²', orbit: '84 Years', temp: '-195°C', moons: 27, dist: '19.2 AU' },
+    atmosphere: [ { name: 'Hydrogen', val: '83.3%' }, { name: 'Helium', val: '15.3%' } ], hasRings: true, ringColor: 0xffffff },
+  { id: 'neptune', name: 'Neptune', tag: 'Ice Giant', color: 0x3d5af1, scale: 2.3, 
+    specs: { mass: '17.1 M⊕', gravity: '11.15 m/s²', orbit: '164.8 Years', temp: '-200°C', moons: 14, dist: '30.1 AU' },
+    atmosphere: [ { name: 'Hydrogen', val: '80.0%' }, { name: 'Helium', val: '19.0%' } ] }
+];
+
+const state = {
+  planet: 'earth',
+  arMode: false,
+};
+
+// ===================== THREE SETUP =====================
+const canvas = document.getElementById('mainCanvas');
+const renderer = new THREE.WebGLRenderer({ 
+  canvas, 
+  antialias: true, 
+  alpha: true,
+  powerPreference: 'high-performance'
+});
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.05;
+renderer.outputColorSpace = THREE.SRGBColorSpace;
+renderer.setClearColor(0x000000, 0);
+
+const scene = new THREE.Scene();
+
+const camera = new THREE.PerspectiveCamera(35, 1, 0.1, 100);
+camera.position.set(0, 2, 14);
+
+const controls = new OrbitControls(camera, canvas);
+controls.enableDamping = true;
+controls.dampingFactor = 0.06;
+controls.minDistance = 4;
+controls.maxDistance = 25;
+controls.maxPolarAngle = Math.PI * 0.9;
+controls.target.set(0, 0, 0);
+
+// Space lighting
+scene.add(new THREE.AmbientLight(0xffffff, 0.05));
+
+const keyLight = new THREE.DirectionalLight(0xffffff, 2.0);
+keyLight.position.set(8, 2, 6);
+scene.add(keyLight);
+
+const rimLight = new THREE.DirectionalLight(0x60a5fa, 0.8);
+rimLight.position.set(-6, 4, -4);
+scene.add(rimLight);
+
+const fillLight = new THREE.DirectionalLight(0x8b5cf6, 0.3);
+fillLight.position.set(0, -3, 4);
+scene.add(fillLight);
+
+const systemGroup = new THREE.Group();
+scene.add(systemGroup);
+
+let currentPlanetMesh = null;
+
+// ===================== PROCEDURAL TEXTURES =====================
+function generateTexture(planet) {
+  const c = document.createElement('canvas');
+  c.width = 1024;
+  c.height = 512;
+  const ctx = c.getContext('2d');
+  
+  const baseColor = new THREE.Color(planet.color);
+  
+  ctx.fillStyle = '#' + baseColor.getHexString();
+  ctx.fillRect(0, 0, c.width, c.height);
+  
+  if (planet.isGas || planet.tag === 'Ice Giant') {
+    for (let i = 0; i < 60; i++) {
+      const y = Math.random() * c.height;
+      const h = Math.random() * 30 + 5;
+      const variance = (Math.random() - 0.5) * (planet.isGas ? 0.3 : 0.1);
+      const bandColor = baseColor.clone().offsetHSL(0, variance, variance);
+      ctx.fillStyle = '#' + bandColor.getHexString();
+      ctx.globalAlpha = Math.random() * 0.6 + 0.1;
+      ctx.fillRect(0, y, c.width, h);
+    }
+    if (planet.id === 'jupiter') {
+        ctx.fillStyle = '#a76040';
+        ctx.globalAlpha = 0.8;
+        ctx.beginPath();
+        ctx.ellipse(600, 300, 40, 20, 0, 0, Math.PI*2);
+        ctx.fill();
+    }
+  } else {
+    // Noise for terrestrial planets
+    for (let i = 0; i < 400; i++) {
+      const x = Math.random() * c.width;
+      const y = Math.random() * c.height;
+      const r = Math.random() * 25 + 2;
+      const variance = (Math.random() - 0.5) * 0.4;
+      const patchColor = baseColor.clone().offsetHSL(0, variance, variance);
+      ctx.fillStyle = '#' + patchColor.getHexString();
+      ctx.globalAlpha = Math.random() * 0.5 + 0.1;
+      ctx.beginPath();
+      ctx.arc(x, y, r, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    if (planet.id === 'earth') {
+      for(let i=0; i<30; i++) {
+        const x = Math.random() * c.width;
+        const y = Math.random() * c.height;
+        const r = Math.random() * 80 + 20;
+        ctx.fillStyle = '#2d6a4f';
+        ctx.globalAlpha = 0.7;
+        ctx.beginPath();
+        ctx.arc(x, y, r, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
+    if (planet.id === 'mars') {
+      for(let i=0; i<15; i++) {
+        const x = Math.random() * c.width;
+        const y = Math.random() * c.height;
+        const r = Math.random() * 60 + 10;
+        ctx.fillStyle = '#6b2d1a';
+        ctx.globalAlpha = 0.5;
+        ctx.beginPath();
+        ctx.arc(x, y, r, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
+  }
+  
+  const tex = new THREE.CanvasTexture(c);
+  tex.colorSpace = THREE.SRGBColorSpace;
+  return tex;
+}
+
+// ===================== PLANET BUILDER =====================
+function createPlanetGroup(planet) {
+  const pGroup = new THREE.Group();
+  
+  const geo = new THREE.SphereGeometry(planet.scale, 64, 64);
+  const tex = generateTexture(planet);
+  const mat = new THREE.MeshStandardMaterial({
+    map: tex,
+    roughness: 0.7,
+    metalness: 0.1,
+  });
+  const core = new THREE.Mesh(geo, mat);
+  pGroup.add(core);
+  
+  if (planet.hasClouds) {
+    const cloudGeo = new THREE.SphereGeometry(planet.scale * 1.02, 64, 64);
+    const cc = document.createElement('canvas');
+    cc.width = 1024; cc.height = 512;
+    const cctx = cc.getContext('2d');
+    cctx.fillStyle = '#000';
+    cctx.fillRect(0,0,1024,512);
+    for(let i=0; i<300; i++) {
+      cctx.fillStyle = '#fff';
+      cctx.globalAlpha = Math.random() * 0.4;
+      cctx.beginPath();
+      cctx.arc(Math.random()*1024, Math.random()*512, Math.random()*30+5, 0, Math.PI*2);
+      cctx.fill();
+    }
+    const cloudMat = new THREE.MeshStandardMaterial({
+      color: 0xffffff,
+      transparent: true,
+      alphaMap: new THREE.CanvasTexture(cc),
+      alphaTest: 0.05,
+      blending: THREE.NormalBlending,
+      roughness: 0.9,
+      depthWrite: false
+    });
+    const clouds = new THREE.Mesh(cloudGeo, cloudMat);
+    pGroup.add(clouds);
+    pGroup.userData.clouds = clouds;
+  }
+  
+  if (planet.hasRings) {
+    const inner = planet.scale * 1.4;
+    const outer = planet.scale * 2.4;
+    const ringGeo = new THREE.RingGeometry(inner, outer, 64);
+    
+    const rc = document.createElement('canvas');
+    rc.width = 512; rc.height = 1;
+    const rctx = rc.getContext('2d');
+    const grad = rctx.createLinearGradient(0,0,512,0);
+    grad.addColorStop(0, 'rgba(255,255,255,0)');
+    grad.addColorStop(0.1, 'rgba(255,255,255,0.8)');
+    grad.addColorStop(0.3, 'rgba(255,255,255,0.2)');
+    grad.addColorStop(0.5, 'rgba(255,255,255,0.9)');
+    grad.addColorStop(0.8, 'rgba(255,255,255,0.4)');
+    grad.addColorStop(1, 'rgba(255,255,255,0)');
+    rctx.fillStyle = grad;
+    rctx.fillRect(0,0,512,1);
+    
+    const ringMat = new THREE.MeshStandardMaterial({
+      map: new THREE.CanvasTexture(rc),
+      color: planet.ringColor || 0xebd2a4,
+      transparent: true,
+      side: THREE.DoubleSide,
+      roughness: 0.6,
+      depthWrite: false
+    });
+    const ringMesh = new THREE.Mesh(ringGeo, ringMat);
+    ringMesh.rotation.x = -Math.PI / 2 + 0.2; 
+    pGroup.add(ringMesh);
+    pGroup.userData.rings = ringMesh;
+  }
+  
+  const atmosGeo = new THREE.SphereGeometry(planet.scale * 1.1, 64, 64);
+  const atmosMat = new THREE.MeshStandardMaterial({
+    color: planet.color,
+    transparent: true,
+    opacity: 0.15,
+    blending: THREE.AdditiveBlending,
+    depthWrite: false
+  });
+  const atmosMesh = new THREE.Mesh(atmosGeo, atmosMat);
+  pGroup.add(atmosMesh);
+
+  pGroup.userData.core = core;
+  return pGroup;
+}
+
+function updatePlanet(planetId) {
+  const config = PLANETS.find(p => p.id === planetId);
+  if (!config) return;
+  
+  const oldPlanet = currentPlanetMesh;
+  const newPlanet = createPlanetGroup(config);
+  newPlanet.scale.setScalar(0.01);
+  systemGroup.add(newPlanet);
+  currentPlanetMesh = newPlanet;
+  
+  let t = 0;
+  function transition() {
+    t += 0.05;
+    const e = Math.min(t, 1);
+    const k = 1 - Math.pow(1 - e, 3);
+    
+    if (oldPlanet) {
+      oldPlanet.scale.setScalar(1 - k);
+      oldPlanet.traverse(c => {
+        if (c.isMesh && c.material) {
+          c.material.transparent = true;
+          c.material.opacity = Math.max(0, 1 - k);
+        }
+      });
+    }
+    
+    newPlanet.scale.setScalar(k);
+    
+    if (t < 1) {
+      requestAnimationFrame(transition);
+    } else {
+      if (oldPlanet) systemGroup.remove(oldPlanet);
+    }
+  }
+  transition();
+  
+  state.planet = planetId;
+  updateSpecs();
+  toast(`Viewing: ${config.name}`, 'fa-globe');
+}
+
+// ===================== UI BUILD =====================
+function buildUI() {
+  const list = document.getElementById('planetList');
+  PLANETS.forEach(p => {
+    const item = document.createElement('div');
+    item.className = 'strap-item';
+    if (p.id === state.planet) item.classList.add('active');
+    item.dataset.id = p.id;
+    
+    const c = new THREE.Color(p.color);
+    const hex = '#' + c.getHexString();
+    const bg = `radial-gradient(circle at 30% 30%, #ffffff 0%, ${hex} 50%, #000000 100%)`;
+    
+    item.innerHTML = `
+      <div class="strap-swatch" style="background: ${bg}; border-radius: 50%;"></div>
+      <div style="flex: 1; min-width: 0;">
+        <div class="strap-name">${p.name}</div>
+        <div class="strap-tag">${p.tag}</div>
+      </div>
+    `;
+    item.onclick = () => {
+      document.querySelectorAll('#planetList .strap-item').forEach(t => t.classList.remove('active'));
+      item.classList.add('active');
+      updatePlanet(p.id);
+    };
+    list.appendChild(item);
+  });
+}
+
+function updateSpecs() {
+  const planet = PLANETS.find(p => p.id === state.planet);
+  const specList = document.getElementById('specList');
+  
+  specList.innerHTML = `
+    <div class="spec-row"><span class="k">Mass</span><span class="v accent">${planet.specs.mass}</span></div>
+    <div class="spec-row"><span class="k">Gravity</span><span class="v">${planet.specs.gravity}</span></div>
+    <div class="spec-row"><span class="k">Orbit</span><span class="v">${planet.specs.orbit}</span></div>
+    <div class="spec-row"><span class="k">Avg Temp</span><span class="v">${planet.specs.temp}</span></div>
+    <div class="spec-row"><span class="k">Moons</span><span class="v">${planet.specs.moons}</span></div>
+  `;
+  
+  const atmosList = document.getElementById('atmosphereList');
+  if (planet.atmosphere.length > 0) {
+    atmosList.innerHTML = planet.atmosphere.map(a => `
+      <li>
+        <span class="pos">${a.val}</span>
+        <span class="desc">${a.name}</span>
+      </li>
+    `).join('');
+  } else {
+    atmosList.innerHTML = `<li><span class="desc" style="font-size:11px; text-align:center; display:block; width:100%;">Negligible / Trace Atmosphere</span></li>`;
+  }
+  
+  document.getElementById('distValue').textContent = planet.specs.dist;
+  
+  const code = `SYS-${planet.name.substring(0,3).toUpperCase()}-01`;
+  document.getElementById('configCode').textContent = code;
+}
+
+buildUI();
+// init first planet
+currentPlanetMesh = createPlanetGroup(PLANETS.find(p => p.id === state.planet));
+systemGroup.add(currentPlanetMesh);
+updateSpecs();
+
+// ===================== TIME UPDATE =====================
+function updateTime() {
+  const now = new Date();
+  
+  const hh = String(now.getHours()).padStart(2, '0');
+  const mm = String(now.getMinutes()).padStart(2, '0');
+  const ss = String(now.getSeconds()).padStart(2, '0');
+  const timeEl = document.getElementById('liveTimeValue');
+  if (timeEl) {
+    timeEl.innerHTML = `${hh}<span class="sep">:</span>${mm}<span class="sep">:</span>${ss}`;
+  }
+  
+  const dateStr = now.toLocaleDateString('en-US', { month: 'short', day: '2-digit' }).toUpperCase();
+  const dateEl = document.getElementById('liveDateValue');
+  if (dateEl) dateEl.textContent = dateStr;
+}
+
+// ===================== ANIMATION LOOP =====================
+let frameCount = 0;
+let fpsLast = performance.now();
+let fps = 60;
+
+function animate(time) {
+  controls.update();
+  updateTime();
+  
+  if (currentPlanetMesh && !state.arMode) {
+    const t = time * 0.001;
+    currentPlanetMesh.rotation.y = t * 0.08;
+    if (currentPlanetMesh.userData.clouds) {
+      currentPlanetMesh.userData.clouds.rotation.y = t * 0.11;
+    }
+    // Subtle float
+    systemGroup.position.y = Math.sin(t) * 0.1;
+  }
+  
+  const az = controls.getAzimuthalAngle();
+  const deg = Math.round(((az * 180 / Math.PI) + 360) % 360);
+  const orbitEl = document.getElementById('orbitValue');
+  if (orbitEl) orbitEl.textContent = String(deg).padStart(3, '0') + '°';
+  
+  frameCount++;
+  if (time - fpsLast > 1000) {
+    fps = Math.round((frameCount * 1000) / (time - fpsLast));
+    frameCount = 0;
+    fpsLast = time;
+    const fpsEl = document.getElementById('fpsCounter');
+    if (fpsEl) fpsEl.textContent = fps + ' FPS';
+  }
+  
+  renderer.render(scene, camera);
+  requestAnimationFrame(animate);
+}
+
+requestAnimationFrame(animate);
+
+// ===================== RESIZE =====================
+function resize() {
+  const stage = document.getElementById('centerStage');
+  const w = stage.clientWidth;
+  const h = stage.clientHeight;
+  camera.aspect = w / h;
+  camera.updateProjectionMatrix();
+  renderer.setSize(w, h, false);
+}
+window.addEventListener('resize', resize);
+resize();
+
+// ===================== AR MODE =====================
+const arToggle = document.getElementById('arToggle');
+const centerStage = document.getElementById('centerStage');
+const webcam = document.getElementById('webcam');
+let webcamStream = null;
+
+arToggle.addEventListener('click', async () => {
+  if (!state.arMode) {
+    try {
+      webcamStream = await navigator.mediaDevices.getUserMedia({ 
+        video: { facingMode: 'user', width: { ideal: 1280 }, height: { ideal: 720 } },
+        audio: false
+      });
+      webcam.srcObject = webcamStream;
+      await new Promise(r => webcam.onloadedmetadata = r);
+      centerStage.classList.add('ar-active');
+      arToggle.classList.add('active');
+      arToggle.innerHTML = '<i class="fas fa-times"></i><span>Exit AR Space</span>';
+      
+      state.arMode = true;
+      controls.target.set(0, 0, 0);
+      camera.position.set(0, 0, 9);
+      
+      systemGroup.position.set(0, -0.5, 0);
+      systemGroup.scale.setScalar(0.85);
+      
+      document.getElementById('arScale').value = 0.85;
+      document.getElementById('arScaleVal').textContent = '0.85×';
+      
+      toast('AR Space active — analyzing environment', 'fa-camera');
+    } catch (err) {
+      toast('Camera access denied or unavailable', 'fa-exclamation-triangle');
+      console.error(err);
+    }
+  } else {
+    centerStage.classList.remove('ar-active');
+    arToggle.classList.remove('active');
+    arToggle.innerHTML = '<i class="fas fa-camera"></i><span>View in AR Space</span>';
+    if (webcamStream) {
+      webcamStream.getTracks().forEach(t => t.stop());
+      webcamStream = null;
+    }
+    state.arMode = false;
+    camera.position.set(0, 2, 14);
+    systemGroup.position.set(0, 0, 0);
+    systemGroup.scale.setScalar(1);
+    toast('AR Space exited', 'fa-check');
+  }
+});
+
+const arBindings = [
+  { id: 'arScale', valId: 'arScaleVal', suffix: '×', apply: v => systemGroup.scale.setScalar(parseFloat(v)) },
+  { id: 'arX', valId: 'arXVal', suffix: '', apply: v => systemGroup.position.x = parseFloat(v) },
+  { id: 'arY', valId: 'arYVal', suffix: '', apply: v => systemGroup.position.y = parseFloat(v) - 0.5 },
+];
+
+arBindings.forEach(b => {
+  const slider = document.getElementById(b.id);
+  const valEl = document.getElementById(b.valId);
+  slider.addEventListener('input', e => {
+    const v = parseFloat(e.target.value);
+    valEl.textContent = v.toFixed(2) + b.suffix;
+    b.apply(v);
+  });
+});
+
+document.getElementById('arSnapshot').addEventListener('click', () => {
+  renderer.render(scene, camera);
+  const w = canvas.width;
+  const h = canvas.height;
+  const tempCanvas = document.createElement('canvas');
+  tempCanvas.width = w;
+  tempCanvas.height = h;
+  const ctx = tempCanvas.getContext('2d');
+  
+  if (webcam.videoWidth) {
+    ctx.save();
+    ctx.scale(-1, 1);
+    const vAspect = webcam.videoWidth / webcam.videoHeight;
+    const cAspect = w / h;
+    let sx = 0, sy = 0, sw = webcam.videoWidth, sh = webcam.videoHeight;
+    if (vAspect > cAspect) {
+      sw = webcam.videoHeight * cAspect;
+      sx = (webcam.videoWidth - sw) / 2;
+    } else {
+      sh = webcam.videoWidth / cAspect;
+      sy = (webcam.videoHeight - sh) / 2;
+    }
+    ctx.drawImage(webcam, sx, sy, sw, sh, -w, 0, w, h);
+    ctx.restore();
+  }
+  ctx.drawImage(canvas, 0, 0, w, h);
+  
+  const link = document.createElement('a');
+  link.download = 'cosmologia-ar-' + Date.now() + '.png';
+  link.href = tempCanvas.toDataURL('image/png');
+  link.click();
+  toast('Snapshot captured to your downloads', 'fa-camera');
+});
+
+// ===================== TOAST =====================
+function toast(message, icon = 'fa-circle-info') {
+  const container = document.getElementById('toastContainer');
+  const el = document.createElement('div');
+  el.className = 'toast';
+  el.innerHTML = `<i class="fas ${icon}"></i><span>${message}</span>`;
+  container.appendChild(el);
+  setTimeout(() => el.remove(), 3200);
+}
+
+// ===================== ACTIONS =====================
+document.getElementById('saveBtn').addEventListener('click', () => {
+  toast('Planet bookmarked to your observatory', 'fa-bookmark');
+});
+
+document.getElementById('resetBtn').addEventListener('click', () => {
+  controls.reset();
+  toast('View reset to default', 'fa-rotate-left');
+});
+
+// ===================== PARTICLES (STARS) =====================
+const pCanvas = document.getElementById('particles');
+const pCtx = pCanvas.getContext('2d');
+let particles = [];
+
+function initParticles() {
+  pCanvas.width = window.innerWidth;
+  pCanvas.height = window.innerHeight;
+  const count = Math.min(250, Math.floor(window.innerWidth / 8));
+  particles = [];
+  for (let i = 0; i < count; i++) {
+    particles.push({
+      x: Math.random() * pCanvas.width,
+      y: Math.random() * pCanvas.height,
+      vx: (Math.random() - 0.5) * 0.05,
+      vy: (Math.random() - 0.5) * 0.05,
+      r: Math.random() * 0.8 + 0.2,
+      a: Math.random() * 0.8 + 0.2,
+      phase: Math.random() * Math.PI * 2
+    });
+  }
+}
+initParticles();
+window.addEventListener('resize', initParticles);
+
+function drawParticles() {
+  pCtx.clearRect(0, 0, pCanvas.width, pCanvas.height);
+  const t = performance.now() * 0.001;
+  particles.forEach(p => {
+    p.x += p.vx;
+    p.y += p.vy;
+    if (p.x < 0) p.x = pCanvas.width;
+    if (p.x > pCanvas.width) p.x = 0;
+    if (p.y < 0) p.y = pCanvas.height;
+    if (p.y > pCanvas.height) p.y = 0;
+    
+    const alpha = p.a * (0.6 + Math.sin(t * 3 + p.phase) * 0.4);
+    pCtx.fillStyle = `rgba(226, 232, 240, ${alpha})`;
+    pCtx.beginPath();
+    pCtx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+    pCtx.fill();
+  });
+  requestAnimationFrame(drawParticles);
+}
+drawParticles();
+
+// ===================== HIDE LOADER =====================
+setTimeout(() => {
+  document.getElementById('loadingScreen').classList.add('done');
+  setTimeout(() => toast('Welcome to Cosmologia Observatory', 'fa-globe'), 400);
+}, 1400);
+
+</script>
+</body>
+</html>
