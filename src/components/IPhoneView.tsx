@@ -7,6 +7,7 @@ import {
   Play, 
   Pause, 
   Volume2, 
+  VolumeX,
   Sun, 
   Sparkles, 
   MapPin, 
@@ -15,7 +16,25 @@ import {
   Camera, 
   Lock, 
   Award, 
-  PhoneCall 
+  PhoneCall,
+  Plus,
+  Power,
+  Plane,
+  Cast,
+  Bluetooth,
+  Signal,
+  SkipBack,
+  SkipForward,
+  Heart,
+  Bell,
+  BellOff,
+  Battery,
+  Calendar,
+  AlarmClock,
+  Disc3,
+  FileText,
+  Languages,
+  Watch
 } from "lucide-react";
 import { APPS_CONFIG } from "../config/apps";
 import { playClick, playBgAudio, pauseBgAudio, bgAudio, setBgAudioVolume } from "../utils/audio";
@@ -43,9 +62,46 @@ export default function IPhoneView({
   const [showNotificationCenter, setShowNotificationCenter] = useState(false);
   const [currentPage, setCurrentPage] = useState(0); // 0 = Screen 1, 1 = Screen 2
   const [isPlaying, setIsPlaying] = useState(false);
-  const [volume, setVolume] = useState(40);
-  const [brightness, setBrightness] = useState(90);
+  const [volume, setVolume] = useState(0);
+  const [brightness, setBrightness] = useState(82);
   const [flashlightOn, setFlashlightOn] = useState(false);
+  const [airplaneMode, setAirplaneMode] = useState(false);
+  const [wifiOn, setWifiOn] = useState(true);
+  const [airdropOn, setAirdropOn] = useState(true);
+  const [bluetoothOn, setBluetoothOn] = useState(true);
+  const [cellularOn, setCellularOn] = useState(false);
+  const [silentMode, setSilentMode] = useState(true);
+  const [lowPowerMode, setLowPowerMode] = useState(false);
+  const [showPowerOffModal, setShowPowerOffModal] = useState(false);
+  const [controlToast, setControlToast] = useState<string | null>(null);
+  const [shazamActive, setShazamActive] = useState(false);
+
+  const showToast = (msg: string) => {
+    setControlToast(msg);
+    setTimeout(() => {
+      setControlToast((curr) => (curr === msg ? null : curr));
+    }, 2000);
+  };
+
+  const handleSliderInteraction = (
+    e: React.MouseEvent<HTMLDivElement> | React.TouchEvent<HTMLDivElement>,
+    type: "brightness" | "volume"
+  ) => {
+    e.stopPropagation();
+    const rect = e.currentTarget.getBoundingClientRect();
+    const clientY = "touches" in e ? e.touches[0].clientY : e.clientY;
+    const offsetY = clientY - rect.top;
+    const rawPct = Math.round(100 - (offsetY / rect.height) * 100);
+    const clamped = Math.max(0, Math.min(100, rawPct));
+
+    if (type === "brightness") {
+      setBrightness(Math.max(10, clamped));
+    } else {
+      setVolume(clamped);
+      setBgAudioVolume(clamped / 100);
+      setSilentMode(clamped === 0);
+    }
+  };
 
   // Touch gesture tracking for status bar pulldown
   const touchStartY = useRef<number>(0);
@@ -695,118 +751,572 @@ export default function IPhoneView({
         )}
       </AnimatePresence>
 
-      {/* ----------------- IPHONE CONTROL CENTER OVERLAY ----------------- */}
+      {/* ----------------- AUTHENTIC IOS 18 CONTROL CENTER OVERLAY ----------------- */}
       <AnimatePresence>
         {showControlCenter && (
           <motion.div
             initial={{ opacity: 0, y: "-100%" }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: "-100%" }}
-            transition={{ type: "spring", stiffness: 300, damping: 30 }}
-            className="fixed inset-0 z-[116] bg-black/75 backdrop-blur-3xl p-5 flex flex-col justify-between"
+            transition={{ type: "spring", stiffness: 320, damping: 32 }}
+            className="fixed inset-0 z-[120] bg-black/85 backdrop-blur-3xl px-4 pt-3 pb-6 flex flex-col justify-between overflow-y-auto custom-scrollbar select-none"
           >
-            {/* Top Bar with Close */}
-            <div className="flex items-center justify-between mb-4">
-              <span className="font-bold text-base text-white">Control Center</span>
-              <button 
+            {/* Top Interactive Feedback Toast */}
+            <AnimatePresence>
+              {controlToast && (
+                <motion.div
+                  initial={{ opacity: 0, y: -15, scale: 0.95 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, y: -15, scale: 0.95 }}
+                  className="fixed top-3 inset-x-0 mx-auto w-max max-w-[85%] bg-white/20 backdrop-blur-2xl border border-white/30 text-white text-xs px-4 py-1.5 rounded-full shadow-2xl z-[135] pointer-events-none font-semibold flex items-center gap-1.5"
+                >
+                  <Sparkles size={13} className="text-amber-300" />
+                  <span>{controlToast}</span>
+                </motion.div>
+              )}
+            </AnimatePresence>
+
+            <div className="w-full max-w-[390px] mx-auto flex flex-col gap-3 relative">
+              {/* 1. TOP HEADER (+ on left, Power on right) */}
+              <div className="flex items-center justify-between px-1">
+                <button
+                  onClick={() => {
+                    playClick();
+                    showToast("Customize Controls");
+                  }}
+                  className="w-8 h-8 rounded-full flex items-center justify-center text-white/80 hover:text-white active:scale-90 transition-transform"
+                  title="Customize Controls"
+                >
+                  <Plus size={22} />
+                </button>
+
+                <button
+                  onClick={() => {
+                    playClick();
+                    setShowPowerOffModal(true);
+                  }}
+                  className="w-8 h-8 rounded-full flex items-center justify-center text-white/80 hover:text-white active:scale-90 transition-transform"
+                  title="Power Off / Lock"
+                >
+                  <Power size={20} />
+                </button>
+              </div>
+
+              {/* 2. SECONDARY STATUS LINE (WiFi Calling ..l & 77% battery) */}
+              <div className="flex items-center justify-between text-[11px] font-semibold text-white/90 px-1">
+                <div className="flex items-center gap-1.5">
+                  <div className="flex items-end gap-0.5 h-3">
+                    <div className="w-0.5 h-1 bg-white rounded-xs" />
+                    <div className="w-0.5 h-1.5 bg-white rounded-xs" />
+                    <div className="w-0.5 h-2.5 bg-white rounded-xs" />
+                    <div className="w-0.5 h-3 bg-white rounded-xs" />
+                  </div>
+                  <span>WiFi Calling</span>
+                  <Wifi size={12} className="text-white" />
+                </div>
+
+                <div className="flex items-center gap-1.5">
+                  <span>77%</span>
+                  <div className="w-5 h-2.5 rounded-sm border border-white/90 p-0.5 flex items-center">
+                    <div className="h-full w-3/4 bg-white rounded-xs" />
+                  </div>
+                </div>
+              </div>
+
+              {/* 3. MEDIA / NOW PLAYING CARD (Top Wide 4-col widget) */}
+              <div className="w-full bg-[#1c1c1e] rounded-[1.8rem] p-3 border border-white/5 flex items-center gap-3 shadow-xl">
+                {/* Album artwork square */}
+                <div className="w-20 h-20 rounded-2xl overflow-hidden bg-[#2c2c2e] shrink-0 border border-white/10 flex items-center justify-center relative shadow-inner">
+                  <img src={ishaanPhoto} alt="Ishaan" className="w-full h-full object-cover" />
+                  {isPlaying && (
+                    <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
+                      <div className="flex items-end gap-0.5 h-4">
+                        <span className="w-1 h-full bg-green-400 animate-pulse" />
+                        <span className="w-1 h-2 bg-green-400 animate-pulse" />
+                        <span className="w-1 h-3 bg-green-400 animate-pulse" />
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Info & Media Controls */}
+                <div className="flex-1 flex flex-col justify-between h-20 py-0.5">
+                  {/* Title & AirPlay */}
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold text-white/90 truncate max-w-[150px]">
+                      {isPlaying ? "Ambient OS Flow" : "Not Playing"}
+                    </span>
+                    <button
+                      onClick={() => {
+                        playClick();
+                        showToast("AirPlay: Connected to Portfolio");
+                      }}
+                      className="w-7 h-7 rounded-full bg-white/10 flex items-center justify-center text-white/70 hover:text-white"
+                      title="AirPlay"
+                    >
+                      <Cast size={13} />
+                    </button>
+                  </div>
+
+                  {/* Playback buttons */}
+                  <div className="flex items-center justify-center gap-7 text-white">
+                    <button
+                      onClick={() => {
+                        playClick();
+                        showToast("Previous Track");
+                      }}
+                      className="text-white/70 hover:text-white active:scale-90 transition-transform"
+                    >
+                      <SkipBack size={18} fill="currentColor" />
+                    </button>
+
+                    <button
+                      onClick={toggleMusic}
+                      className="text-white active:scale-90 transition-transform"
+                    >
+                      {isPlaying ? (
+                        <Pause size={22} fill="currentColor" />
+                      ) : (
+                        <Play size={22} fill="currentColor" className="ml-0.5" />
+                      )}
+                    </button>
+
+                    <button
+                      onClick={() => {
+                        playClick();
+                        showToast("Next Track");
+                      }}
+                      className="text-white/70 hover:text-white active:scale-90 transition-transform"
+                    >
+                      <SkipForward size={18} fill="currentColor" />
+                    </button>
+                  </div>
+
+                  {/* Scrubber */}
+                  <div className="flex items-center gap-2">
+                    <span className="text-[10px] text-white/40 font-mono">-:--</span>
+                    <div className="flex-1 h-1 bg-white/20 rounded-full overflow-hidden">
+                      <div
+                        className={`h-full bg-white/80 rounded-full ${
+                          isPlaying ? "w-1/2 animate-pulse" : "w-0"
+                        }`}
+                      />
+                    </div>
+                    <span className="text-[10px] text-white/40 font-mono">--:--</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* 4. MAIN GRID (4 COLUMNS) */}
+              <div className="grid grid-cols-4 gap-2.5">
+                {/* ---------- ROW 1: CONNECTIVITY (2 cols) + BRIGHTNESS + VOLUME ---------- */}
+                {/* Connectivity 2x2 Cluster */}
+                <div className="col-span-2 h-[8.8rem] rounded-[1.8rem] bg-[#1c1c1e] p-2.5 grid grid-cols-2 grid-rows-2 gap-2 border border-white/5 shadow-xl">
+                  {/* Airplane Mode */}
+                  <button
+                    onClick={() => {
+                      playClick();
+                      const next = !airplaneMode;
+                      setAirplaneMode(next);
+                      if (next) {
+                        setWifiOn(false);
+                        setCellularOn(false);
+                        showToast("Airplane Mode On");
+                      } else {
+                        setWifiOn(true);
+                        showToast("Airplane Mode Off");
+                      }
+                    }}
+                    className={`w-full h-full rounded-full flex items-center justify-center transition-all ${
+                      airplaneMode
+                        ? "bg-[#ff9500] text-white shadow-lg shadow-orange-500/30"
+                        : "bg-[#2c2c2e] text-white hover:bg-[#38383a]"
+                    }`}
+                    title="Airplane Mode"
+                  >
+                    <Plane size={20} className={airplaneMode ? "rotate-0" : "-rotate-45"} />
+                  </button>
+
+                  {/* AirDrop */}
+                  <button
+                    onClick={() => {
+                      playClick();
+                      const next = !airdropOn;
+                      setAirdropOn(next);
+                      showToast(next ? "AirDrop: Everyone (10m)" : "AirDrop: Off");
+                    }}
+                    className={`w-full h-full rounded-full flex items-center justify-center transition-all ${
+                      airdropOn
+                        ? "bg-[#007aff] text-white shadow-lg shadow-blue-500/30"
+                        : "bg-[#2c2c2e] text-white hover:bg-[#38383a]"
+                    }`}
+                    title="AirDrop"
+                  >
+                    <Cast size={20} />
+                  </button>
+
+                  {/* Wi-Fi */}
+                  <button
+                    onClick={() => {
+                      playClick();
+                      const next = !wifiOn;
+                      setWifiOn(next);
+                      showToast(next ? "Wi-Fi: ishaanjha-5G" : "Wi-Fi Disconnected");
+                    }}
+                    className={`w-full h-full rounded-full flex items-center justify-center transition-all ${
+                      wifiOn
+                        ? "bg-[#007aff] text-white shadow-lg shadow-blue-500/30"
+                        : "bg-[#2c2c2e] text-white hover:bg-[#38383a]"
+                    }`}
+                    title="Wi-Fi"
+                  >
+                    <Wifi size={20} />
+                  </button>
+
+                  {/* 4-in-1 Sub-Cluster */}
+                  <div
+                    onClick={() => {
+                      playClick();
+                      const next = !bluetoothOn;
+                      setBluetoothOn(next);
+                      showToast(next ? "Bluetooth: Connected" : "Bluetooth Off");
+                    }}
+                    className="w-full h-full rounded-full bg-[#2c2c2e] p-1.5 grid grid-cols-2 grid-rows-2 items-center justify-items-center gap-0.5 cursor-pointer hover:bg-[#38383a] transition-colors"
+                    title="Cellular, Bluetooth, Hotspot & Satellite"
+                  >
+                    <Signal size={12} className={cellularOn ? "text-green-400" : "text-white/60"} />
+                    <div
+                      className={`w-4 h-4 rounded-full flex items-center justify-center ${
+                        bluetoothOn ? "bg-[#007aff] text-white" : "text-white/40"
+                      }`}
+                    >
+                      <Bluetooth size={10} />
+                    </div>
+                    <Radio size={11} className="text-white/40" />
+                    <Sparkles size={10} className="text-white/40" />
+                  </div>
+                </div>
+
+                {/* Brightness Vertical Slider (1 col) */}
+                <div
+                  onClick={(e) => handleSliderInteraction(e, "brightness")}
+                  onTouchMove={(e) => handleSliderInteraction(e, "brightness")}
+                  className="col-span-1 h-[8.8rem] rounded-[1.8rem] bg-[#242426] relative overflow-hidden cursor-pointer select-none border border-white/5 shadow-xl flex flex-col justify-end"
+                  title="Brightness Slider"
+                >
+                  {/* Fill Bar */}
+                  <div
+                    className="absolute bottom-0 inset-x-0 bg-white transition-all duration-75 rounded-b-[1.8rem]"
+                    style={{ height: `${brightness}%` }}
+                  />
+                  {/* Centered Sun Icon */}
+                  <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                    <Sun
+                      size={22}
+                      className={
+                        brightness > 45 ? "text-neutral-800" : "text-amber-300 drop-shadow-md"
+                      }
+                    />
+                  </div>
+                </div>
+
+                {/* Volume Vertical Slider (1 col) */}
+                <div
+                  onClick={(e) => handleSliderInteraction(e, "volume")}
+                  onTouchMove={(e) => handleSliderInteraction(e, "volume")}
+                  className="col-span-1 h-[8.8rem] rounded-[1.8rem] bg-[#242426] relative overflow-hidden cursor-pointer select-none border border-white/5 shadow-xl flex flex-col justify-end"
+                  title="Volume Slider"
+                >
+                  {/* Fill Bar */}
+                  <div
+                    className="absolute bottom-0 inset-x-0 bg-white transition-all duration-75 rounded-b-[1.8rem]"
+                    style={{ height: `${volume}%` }}
+                  />
+                  {/* Centered Volume / Mute Icon */}
+                  <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                    {volume === 0 || silentMode ? (
+                      <VolumeX size={22} className="text-[#007aff] drop-shadow-md" />
+                    ) : (
+                      <Volume2
+                        size={22}
+                        className={volume > 45 ? "text-neutral-800" : "text-white"}
+                      />
+                    )}
+                  </div>
+                </div>
+
+                {/* ---------- ROW 2: CELLULAR DATA + SILENT + LOW POWER ---------- */}
+                {/* Cellular Data Wide Pill (2 cols) */}
+                <div
+                  onClick={() => {
+                    playClick();
+                    const next = !cellularOn;
+                    setCellularOn(next);
+                    showToast(next ? "Cellular Data: 5G Active" : "Cellular Data: Off");
+                  }}
+                  className="col-span-2 h-14 rounded-[1.6rem] bg-[#1c1c1e] px-4 flex items-center gap-3 border border-white/5 cursor-pointer active:scale-[0.98] transition-transform shadow-lg"
+                >
+                  <div
+                    className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${
+                      cellularOn ? "bg-green-500 text-white" : "bg-[#2c2c2e] text-white/70"
+                    }`}
+                  >
+                    <Signal size={16} />
+                  </div>
+                  <div className="flex flex-col text-left leading-none">
+                    <span className="text-xs font-semibold text-white">Cellular Data</span>
+                    <span className="text-[11px] text-white/50 mt-1">
+                      {cellularOn ? "5G Active" : "Off"}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Silent Mode Bell (1 col) */}
+                <button
+                  onClick={() => {
+                    playClick();
+                    const next = !silentMode;
+                    setSilentMode(next);
+                    if (next) {
+                      setVolume(0);
+                      setBgAudioVolume(0);
+                      showToast("Silent Mode On");
+                    } else {
+                      setVolume(50);
+                      setBgAudioVolume(0.5);
+                      showToast("Silent Mode Off");
+                    }
+                  }}
+                  className={`col-span-1 h-14 w-14 mx-auto rounded-full flex items-center justify-center border border-white/5 active:scale-90 transition-all shadow-lg ${
+                    silentMode ? "bg-[#1c1c1e] text-white" : "bg-[#1c1c1e] text-red-400"
+                  }`}
+                  title="Silent Mode"
+                >
+                  {silentMode ? <Bell size={20} /> : <BellOff size={20} />}
+                </button>
+
+                {/* Low Power Mode (1 col) */}
+                <button
+                  onClick={() => {
+                    playClick();
+                    const next = !lowPowerMode;
+                    setLowPowerMode(next);
+                    showToast(next ? "Low Power Mode On" : "Low Power Mode Off");
+                  }}
+                  className={`col-span-1 h-14 w-14 mx-auto rounded-full flex items-center justify-center border border-white/5 active:scale-90 transition-all shadow-lg ${
+                    lowPowerMode
+                      ? "bg-[#ff9500] text-black shadow-amber-500/40"
+                      : "bg-[#1c1c1e] text-white"
+                  }`}
+                  title="Low Power Mode"
+                >
+                  <Battery size={20} />
+                </button>
+
+                {/* ---------- ROW 3: RESTART + FLASHLIGHT + CAMERA ---------- */}
+                {/* Restart Wide Pill (2 cols) */}
+                <div
+                  onClick={() => {
+                    playClick();
+                    showToast("Restarting OS...");
+                    setTimeout(() => {
+                      window.location.reload();
+                    }, 600);
+                  }}
+                  className="col-span-2 h-14 rounded-[1.6rem] bg-[#1c1c1e] px-4 flex items-center gap-3 border border-white/5 cursor-pointer active:scale-[0.98] transition-transform shadow-lg"
+                >
+                  <div className="w-8 h-8 rounded-full bg-[#2c2c2e] flex items-center justify-center text-white shrink-0">
+                    <Power size={16} />
+                  </div>
+                  <div className="flex flex-col text-left leading-none">
+                    <span className="text-xs font-semibold text-white">Restart</span>
+                  </div>
+                </div>
+
+                {/* Flashlight (1 col) */}
+                <button
+                  onClick={() => {
+                    playClick();
+                    const next = !flashlightOn;
+                    setFlashlightOn(next);
+                    showToast(next ? "Flashlight On" : "Flashlight Off");
+                  }}
+                  className={`col-span-1 h-14 w-14 mx-auto rounded-full flex items-center justify-center border border-white/5 active:scale-90 transition-all shadow-lg ${
+                    flashlightOn
+                      ? "bg-white text-black shadow-[0_0_25px_rgba(255,255,255,0.9)]"
+                      : "bg-[#1c1c1e] text-white"
+                  }`}
+                  title="Flashlight"
+                >
+                  <Flashlight size={20} />
+                </button>
+
+                {/* Camera / Photos (1 col) */}
+                <button
+                  onClick={() => {
+                    playClick();
+                    setShowControlCenter(false);
+                    onOpenApp("photos");
+                  }}
+                  className="col-span-1 h-14 w-14 mx-auto rounded-full bg-[#1c1c1e] text-white flex items-center justify-center border border-white/5 cursor-pointer active:scale-90 transition-transform shadow-lg"
+                  title="Camera / Photos"
+                >
+                  <Camera size={20} />
+                </button>
+
+                {/* ---------- ROW 4: NEW EVENT + ALARM + SHAZAM ---------- */}
+                {/* New Event Wide Pill (2 cols) */}
+                <div
+                  onClick={() => {
+                    playClick();
+                    setShowControlCenter(false);
+                    onOpenApp("mail");
+                  }}
+                  className="col-span-2 h-14 rounded-[1.6rem] bg-[#1c1c1e] px-4 flex items-center gap-3 border border-white/5 cursor-pointer active:scale-[0.98] transition-transform shadow-lg"
+                >
+                  <div className="w-8 h-8 rounded-full bg-[#2c2c2e] flex items-center justify-center text-white shrink-0">
+                    <Calendar size={16} />
+                  </div>
+                  <div className="flex flex-col text-left leading-none">
+                    <span className="text-xs font-semibold text-white">New event</span>
+                  </div>
+                </div>
+
+                {/* Alarm / Timer (1 col) */}
+                <button
+                  onClick={() => {
+                    playClick();
+                    showToast("Alarm: 7:00 AM Active");
+                  }}
+                  className="col-span-1 h-14 w-14 mx-auto rounded-full bg-[#1c1c1e] text-white flex items-center justify-center border border-white/5 cursor-pointer active:scale-90 transition-transform shadow-lg"
+                  title="Alarm"
+                >
+                  <AlarmClock size={20} />
+                </button>
+
+                {/* Shazam (1 col) */}
+                <button
+                  onClick={() => {
+                    playClick();
+                    setShazamActive(true);
+                    showToast("Shazam: Listening...");
+                    setTimeout(() => {
+                      setShazamActive(false);
+                      showToast("Recognized: Ishaan Portfolio OS Flow");
+                    }, 1400);
+                  }}
+                  className={`col-span-1 h-14 w-14 mx-auto rounded-full flex items-center justify-center border border-white/5 transition-all shadow-lg ${
+                    shazamActive
+                      ? "bg-[#007aff] text-white animate-pulse shadow-blue-500/50"
+                      : "bg-[#1c1c1e] text-white active:scale-90"
+                  }`}
+                  title="Shazam Music Recognition"
+                >
+                  <Disc3 size={20} />
+                </button>
+
+                {/* ---------- ROW 5: WIKIPEDIA + TRANSLATE + APPLE WATCH ---------- */}
+                {/* Wikipedia / Bio Wide Pill (2 cols) */}
+                <div
+                  onClick={() => {
+                    playClick();
+                    setShowControlCenter(false);
+                    onOpenApp("finder");
+                  }}
+                  className="col-span-2 h-14 rounded-[1.6rem] bg-[#1c1c1e] px-4 flex items-center gap-3 border border-white/5 cursor-pointer active:scale-[0.98] transition-transform shadow-lg"
+                >
+                  <div className="w-8 h-8 rounded-full bg-[#2c2c2e] flex items-center justify-center text-white shrink-0">
+                    <FileText size={16} />
+                  </div>
+                  <div className="flex flex-col text-left leading-none">
+                    <span className="text-xs font-semibold text-white">Wikipedia</span>
+                  </div>
+                </div>
+
+                {/* Translate (1 col) */}
+                <button
+                  onClick={() => {
+                    playClick();
+                    showToast("Language: English · Hindi");
+                  }}
+                  className="col-span-1 h-14 w-14 mx-auto rounded-full bg-[#1c1c1e] text-white flex items-center justify-center border border-white/5 cursor-pointer active:scale-90 transition-transform shadow-lg"
+                  title="Translate"
+                >
+                  <Languages size={20} />
+                </button>
+
+                {/* Apple Watch (1 col) */}
+                <button
+                  onClick={() => {
+                    playClick();
+                    showToast("Pinging Apple Watch...");
+                  }}
+                  className="col-span-1 h-14 w-14 mx-auto rounded-full bg-[#1c1c1e] text-white flex items-center justify-center border border-white/5 cursor-pointer active:scale-90 transition-transform shadow-lg"
+                  title="Ping Apple Watch"
+                >
+                  <Watch size={20} />
+                </button>
+              </div>
+
+              {/* Right Margin iOS 18 Indicator Icons */}
+              <div className="absolute -right-3 top-1/2 -translate-y-1/2 hidden sm:flex flex-col items-center gap-5 text-white/30 pointer-events-none">
+                <Heart size={13} className="text-white fill-white" />
+                <Radio size={13} />
+                <Disc3 size={13} />
+              </div>
+
+              {/* Bottom Dismiss Pill */}
+              <div
                 onClick={() => {
                   playClick();
                   setShowControlCenter(false);
                 }}
-                className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center text-white hover:bg-white/20 transition-colors"
+                className="w-36 h-1 bg-white/70 rounded-full mx-auto mt-4 shrink-0 cursor-pointer hover:bg-white"
+                title="Swipe up to dismiss"
+              />
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* ----------------- IOS 18 POWER OFF MODAL ----------------- */}
+      <AnimatePresence>
+        {showPowerOffModal && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[140] bg-black/90 backdrop-blur-2xl flex flex-col justify-between p-8 text-white select-none"
+          >
+            <div className="pt-12 flex flex-col items-center gap-6">
+              {/* Slide to power off bar */}
+              <div
+                onClick={() => {
+                  playClick();
+                  setShowPowerOffModal(false);
+                  setShowControlCenter(false);
+                  window.location.reload();
+                }}
+                className="w-full max-w-xs bg-white/15 border border-white/20 rounded-full p-1.5 flex items-center justify-between cursor-pointer active:scale-95 transition-transform"
               >
-                <X size={18} />
+                <div className="w-12 h-12 rounded-full bg-red-600 flex items-center justify-center text-white shadow-lg">
+                  <Power size={22} />
+                </div>
+                <span className="text-sm font-medium text-white/90 pr-6">slide to power off</span>
+              </div>
+            </div>
+
+            <div className="flex flex-col items-center gap-4 pb-8">
+              <button
+                onClick={() => {
+                  playClick();
+                  setShowPowerOffModal(false);
+                }}
+                className="w-16 h-16 rounded-full bg-white/20 flex items-center justify-center text-sm font-semibold active:scale-95 transition-transform text-white"
+              >
+                Cancel
               </button>
             </div>
-
-            {/* Quick Toggles */}
-            <div className="grid grid-cols-2 gap-3 mb-4">
-              {/* Connectivity Box */}
-              <div className="bg-white/10 rounded-3xl p-4 flex flex-col gap-3 border border-white/15">
-                <div className="flex items-center gap-3">
-                  <div className="w-9 h-9 rounded-full bg-blue-500 flex items-center justify-center text-white">
-                    <Wifi size={18} />
-                  </div>
-                  <div>
-                    <div className="text-xs font-bold">Wi-Fi</div>
-                    <div className="text-[10px] text-white/60">ishaanjha-5G</div>
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-3">
-                  <div className="w-9 h-9 rounded-full bg-blue-500 flex items-center justify-center text-white">
-                    <Radio size={18} />
-                  </div>
-                  <div>
-                    <div className="text-xs font-bold">5G Network</div>
-                    <div className="text-[10px] text-white/60">Connected</div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Music Player Box */}
-              <div className="bg-white/10 rounded-3xl p-4 flex flex-col justify-between border border-white/15">
-                <div>
-                  <span className="text-[11px] font-semibold text-white/60 uppercase">Now Playing</span>
-                  <div className="text-xs font-bold text-white mt-1 truncate">Ambient OS Flow</div>
-                  <div className="text-[10px] text-blue-300">Ishaan Jha Portfolio</div>
-                </div>
-                <div className="flex items-center justify-center pt-2">
-                  <button 
-                    onClick={toggleMusic}
-                    className="w-12 h-12 rounded-full bg-white text-black flex items-center justify-center shadow-lg active:scale-95 transition-transform"
-                  >
-                    {isPlaying ? <Pause size={20} /> : <Play size={20} className="ml-0.5" />}
-                  </button>
-                </div>
-              </div>
-            </div>
-
-            {/* Volume & Brightness Vertical Sliders */}
-            <div className="grid grid-cols-2 gap-3 mb-6">
-              <div className="bg-white/10 rounded-3xl p-4 flex flex-col gap-3 border border-white/15">
-                <div className="flex items-center justify-between text-xs font-semibold">
-                  <span className="flex items-center gap-1.5"><Sun size={15} /> Brightness</span>
-                  <span>{brightness}%</span>
-                </div>
-                <input 
-                  type="range"
-                  min="20"
-                  max="100"
-                  value={brightness}
-                  onChange={(e) => setBrightness(Number(e.target.value))}
-                  className="w-full h-2 bg-white/20 rounded-full appearance-none cursor-pointer"
-                />
-              </div>
-
-              <div className="bg-white/10 rounded-3xl p-4 flex flex-col gap-3 border border-white/15">
-                <div className="flex items-center justify-between text-xs font-semibold">
-                  <span className="flex items-center gap-1.5"><Volume2 size={15} /> Volume</span>
-                  <span>{volume}%</span>
-                </div>
-                <input 
-                  type="range"
-                  min="0"
-                  max="100"
-                  value={volume}
-                  onChange={(e) => {
-                    const val = Number(e.target.value);
-                    setVolume(val);
-                    setBgAudioVolume(val / 100);
-                  }}
-                  className="w-full h-2 bg-white/20 rounded-full appearance-none cursor-pointer"
-                />
-              </div>
-            </div>
-
-            {/* Close swipe bar at bottom */}
-            <div 
-              onClick={() => {
-                playClick();
-                setShowControlCenter(false);
-              }}
-              className="w-36 h-1 bg-white/60 rounded-full mx-auto cursor-pointer hover:bg-white" 
-            />
           </motion.div>
         )}
       </AnimatePresence>
