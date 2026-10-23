@@ -18,6 +18,7 @@ import IframeApp from "./apps/IframeApp";
 import GithubApp from "./apps/GithubApp";
 import LinkedinApp from "./apps/LinkedinApp";
 import PhotosApp from "./apps/PhotosApp";
+import SetuApp from "./apps/SetuApp";
 
 import type { ReactNode } from "react";
 
@@ -44,7 +45,7 @@ const APPS: Record<string, { title: string; component: ReactNode }> = {
   },
   dbeos: { title: "DBE-OS", component: <IframeApp url="https://dbeos.in" /> },
   nova: { title: "Nova Unplugged", component: <IframeApp url="https://nova-unplugged.dbeos.in" /> },
-  setu: { title: "Setu Startup School", component: <IframeApp url="https://setustartupschool.com" /> },
+  setu: { title: "Setu Startup School", component: <SetuApp /> },
   cosmologia: { title: "Cosmologia - 3D Explorer", component: <IframeApp url="/cosmos.html" /> },
   mail: { 
     title: "Mail", 
