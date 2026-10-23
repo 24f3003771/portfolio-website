@@ -162,8 +162,8 @@ export default function LinkedinApp() {
           
           {/* IIMB */}
           <div className="flex gap-3 sm:gap-4">
-            <div className="w-12 h-12 bg-amber-50 rounded-xl flex items-center justify-center shrink-0 border border-amber-200">
-              <Building size={22} className="text-amber-800" />
+            <div className="w-12 h-12 bg-white rounded-xl flex items-center justify-center shrink-0 border border-gray-200 overflow-hidden p-1 shadow-sm">
+              <img src="/iimb-logo.png" alt="IIM Bangalore" className="w-9 h-9 object-contain" />
             </div>
             <div>
               <h3 className="font-bold text-gray-900 text-sm sm:text-base">Indian Institute of Management Bangalore (IIM-B)</h3>
@@ -176,8 +176,8 @@ export default function LinkedinApp() {
 
           {/* IITM */}
           <div className="flex gap-3 sm:gap-4">
-            <div className="w-12 h-12 bg-indigo-50 rounded-xl flex items-center justify-center shrink-0 border border-indigo-200">
-              <Building size={22} className="text-indigo-800" />
+            <div className="w-12 h-12 bg-white rounded-xl flex items-center justify-center shrink-0 border border-gray-200 overflow-hidden p-1 shadow-sm">
+              <img src="/iitm-logo.png" alt="IIT Madras" className="w-9 h-9 object-contain" />
             </div>
             <div>
               <h3 className="font-bold text-gray-900 text-sm sm:text-base">Indian Institute of Technology Madras (IIT-M)</h3>

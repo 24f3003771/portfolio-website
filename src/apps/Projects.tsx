@@ -1,4 +1,4 @@
-import { ExternalLink, Sparkles, QrCode, LayoutDashboard, Rocket, FileSpreadsheet } from "lucide-react";
+import { ExternalLink, Sparkles, Rocket, FileSpreadsheet } from "lucide-react";
 
 export default function Projects() {
   const projects = [
@@ -10,7 +10,7 @@ export default function Projects() {
       desc: "Co-built from 0 to production in under 48 hours via AI-directed development (Antigravity, OpenClaw, Claude, Cursor, GLM), handling 500+ users on zero-cost infrastructure. Delivered auth, ticketing, QR gate entry, admin panel and the full attendee flow. The site surfaces on Google for “Nova Unplugged”.",
       link: "nova-unplugged.dbeos.in",
       gradient: "from-orange-500 via-rose-500 to-purple-600",
-      icon: <QrCode size={30} className="text-white" />
+      icon: <img src="/nova-logo.png" alt="Nova Unplugged" className="w-8 h-8 object-contain drop-shadow" />
     },
     {
       title: "DBE-OS",
@@ -20,7 +20,7 @@ export default function Projects() {
       desc: "Co-built for 3,000+ users (in testing, launching soon) with 6+ tools. The Internship Hunter tool is backed by 500+ scraped career-portal links and 100+ data points on live opportunities. Delivered with zero budget and AI-assisted development.",
       link: "dbeos.in",
       gradient: "from-blue-600 via-indigo-600 to-violet-700",
-      icon: <LayoutDashboard size={30} className="text-white" />
+      icon: <img src="/dbeos-logo.png" alt="DBE-OS" className="w-8 h-8 object-contain rounded-md drop-shadow" />
     },
     {
       title: "Ecofone Enterprise Billing",
@@ -30,7 +30,7 @@ export default function Projects() {
       desc: "Helped design and build an enterprise-grade, GST-compliant billing software for the Indian market. Redesigned company website improving UX and structure. Identified and secured AWS startup programme benefits, slashing infrastructure costs.",
       link: "ishaanjha.mybuildspace.in",
       gradient: "from-emerald-500 via-teal-600 to-cyan-700",
-      icon: <FileSpreadsheet size={30} className="text-white" />
+      icon: <FileSpreadsheet size={28} className="text-white" />
     },
     {
       title: "Cosmologia 3D",
@@ -40,7 +40,7 @@ export default function Projects() {
       desc: "Interactive 3D celestial physics observatory featuring procedural planetary surface rendering, real-time lighting shaders, orbital mechanics, and augmented reality camera projection.",
       link: "ishaanjha.mybuildspace.in",
       gradient: "from-cyan-500 via-blue-600 to-indigo-900",
-      icon: <Rocket size={30} className="text-white" />
+      icon: <Rocket size={28} className="text-white" />
     }
   ];
 
