@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
   Wifi, 
@@ -8,9 +8,14 @@ import {
   Pause, 
   Volume2, 
   Sun, 
-  Sparkles,
-  MapPin,
-  Radio
+  Sparkles, 
+  MapPin, 
+  Radio, 
+  Flashlight, 
+  Camera, 
+  Lock, 
+  Award, 
+  PhoneCall 
 } from "lucide-react";
 import { APPS_CONFIG } from "../config/apps";
 import { playClick, playBgAudio, pauseBgAudio, bgAudio, setBgAudioVolume } from "../utils/audio";
@@ -32,11 +37,19 @@ export default function IPhoneView({
 }: IPhoneViewProps) {
   const [timeStr, setTimeStr] = useState("9:41");
   const [dateStr, setDateStr] = useState("");
+  const [fullDateStr, setFullDateStr] = useState("");
   const [isDynamicIslandExpanded, setIsDynamicIslandExpanded] = useState(false);
   const [showControlCenter, setShowControlCenter] = useState(false);
+  const [showNotificationCenter, setShowNotificationCenter] = useState(false);
+  const [currentPage, setCurrentPage] = useState(0); // 0 = Screen 1, 1 = Screen 2
   const [isPlaying, setIsPlaying] = useState(false);
   const [volume, setVolume] = useState(40);
   const [brightness, setBrightness] = useState(90);
+  const [flashlightOn, setFlashlightOn] = useState(false);
+
+  // Touch gesture tracking for status bar pulldown
+  const touchStartY = useRef<number>(0);
+  const touchStartX = useRef<number>(0);
 
   // Audio Sync
   useEffect(() => {
@@ -88,23 +101,113 @@ export default function IPhoneView({
           day: "numeric"
         })
       );
+      setFullDateStr(
+        now.toLocaleDateString("en-US", {
+          weekday: "long",
+          month: "long",
+          day: "numeric"
+        })
+      );
     };
     updateClock();
     const interval = setInterval(updateClock, 1000);
     return () => clearInterval(interval);
   }, []);
 
-  // Filter dock apps and grid apps
-  const dockApps = APPS_CONFIG.slice(0, 4); // 4 apps in dock: About, Photos, Terminal, Safari
-  const homeGridApps = APPS_CONFIG; // All apps displayed cleanly on iOS home grid
+  // Bottom dock apps (4 essential iOS dock icons)
+  const dockApps = APPS_CONFIG.slice(0, 4); // About Me, Photos, Terminal, Projects
+
+  // Page 1 apps (First 8 apps)
+  const page1Apps = APPS_CONFIG.slice(0, 8);
+  // Page 2 apps (Remaining apps)
+  const page2Apps = APPS_CONFIG.slice(8);
 
   const handleAppClick = (id: string) => {
     playClick();
     onOpenApp(id);
   };
 
+  // Touch handlers for pulldown gestures from top bar
+  const handleTouchStart = (e: React.TouchEvent) => {
+    touchStartY.current = e.touches[0].clientY;
+    touchStartX.current = e.touches[0].clientX;
+  };
+
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    const deltaY = e.changedTouches[0].clientY - touchStartY.current;
+    const startX = touchStartX.current;
+    const screenWidth = typeof window !== "undefined" ? window.innerWidth : 390;
+
+    // Pull down gesture detected from top
+    if (deltaY > 40 && touchStartY.current < 80) {
+      playClick();
+      if (startX > screenWidth / 2) {
+        // Pulled from right -> Control Center
+        setShowControlCenter(true);
+        setShowNotificationCenter(false);
+      } else {
+        // Pulled from left / center -> Notification Center
+        setShowNotificationCenter(true);
+        setShowControlCenter(false);
+      }
+    }
+  };
+
+  // Notification items
+  const notifications = [
+    {
+      id: "notif-1",
+      app: "LinkedIn",
+      icon: "💼",
+      color: "bg-[#0a66c2]",
+      time: "10m ago",
+      title: "VC & Founder Network",
+      desc: "3 founders & investors from IIM Bangalore and IIT Madras network viewed your profile."
+    },
+    {
+      id: "notif-2",
+      app: "Ecofone",
+      icon: "🏢",
+      color: "bg-emerald-600",
+      time: "1h ago",
+      title: "Team Standup & AWS Credits",
+      desc: "30-member departmental sync ready. AWS cost reductions tracked at ~₹3,000/mo."
+    },
+    {
+      id: "notif-3",
+      app: "DBE-OS",
+      icon: "🌐",
+      color: "bg-purple-600",
+      time: "3h ago",
+      title: "Cohort Platform Active",
+      desc: "3,000+ IIM-B students active. Internship Hunter live with 500+ scraped live opportunities."
+    },
+    {
+      id: "notif-4",
+      app: "Nova Unplugged",
+      icon: "⚡",
+      color: "bg-orange-500",
+      time: "5h ago",
+      title: "QR Gate Entry Milestone",
+      desc: "500+ attendees checked in with 0ms downtime on zero-cost infrastructure."
+    },
+    {
+      id: "notif-5",
+      app: "IIT Madras Saavan",
+      icon: "🏆",
+      color: "bg-amber-500",
+      time: "Yesterday",
+      title: "Money Matrix Case Competition",
+      desc: "1st Place Winner in Financial Simulation & Analytical Strategy."
+    }
+  ];
+
   return (
-    <div className="relative w-full h-[100dvh] overflow-hidden bg-[#000] text-white flex flex-col justify-between select-none">
+    <div 
+      className="relative w-full h-[100dvh] overflow-hidden bg-[#000] text-white flex flex-col justify-between select-none"
+      onTouchStart={handleTouchStart}
+      onTouchEnd={handleTouchEnd}
+    >
       {/* Background iOS Wallpaper */}
       <div 
         className="absolute inset-0 bg-cover bg-center pointer-events-none transition-all duration-700"
@@ -119,8 +222,15 @@ export default function IPhoneView({
 
       {/* ----------------- IPHONE STATUS BAR (TOP) ----------------- */}
       <div className="relative z-50 w-full h-12 pt-2 px-6 flex items-center justify-between text-xs font-semibold shrink-0">
-        {/* Left: Time */}
-        <div className="w-16 flex items-center">
+        {/* Left: Time (Tap or swipe down -> Notification Center) */}
+        <div 
+          className="w-16 flex items-center cursor-pointer group active:opacity-60 transition-opacity"
+          onClick={() => {
+            playClick();
+            setShowNotificationCenter(true);
+          }}
+          title="Swipe or Tap for Notifications"
+        >
           <span className="text-[15px] font-bold tracking-tight">{timeStr}</span>
         </div>
 
@@ -196,10 +306,14 @@ export default function IPhoneView({
           </motion.div>
         </div>
 
-        {/* Right: Cellular, 5G, Wifi, Battery */}
+        {/* Right: Cellular, 5G, Wifi, Battery (Tap or swipe down -> Control Center) */}
         <div 
-          className="w-16 flex items-center justify-end gap-1.5 cursor-pointer"
-          onClick={() => setShowControlCenter(!showControlCenter)}
+          className="w-16 flex items-center justify-end gap-1.5 cursor-pointer active:opacity-60 transition-opacity"
+          onClick={() => {
+            playClick();
+            setShowControlCenter(true);
+          }}
+          title="Swipe or Tap for Control Center"
         >
           {/* Signal Bars */}
           <div className="flex items-end gap-0.5 h-3">
@@ -220,71 +334,196 @@ export default function IPhoneView({
         </div>
       </div>
 
-      {/* ----------------- IPHONE HOME SCREEN CONTENT ----------------- */}
-      <div className="relative z-10 flex-1 overflow-y-auto px-4 pt-2 pb-2 custom-scrollbar flex flex-col justify-between">
+      {/* ----------------- MULTI-PAGE SWIPEABLE HOME SCREEN ----------------- */}
+      <div className="relative z-10 flex-1 overflow-hidden flex flex-col justify-between">
         
-        {/* Top iOS Smart Widget */}
+        {/* Swipe Container (Screen 1 <-> Screen 2) */}
         <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="w-full bg-white/10 backdrop-blur-2xl border border-white/20 rounded-[2rem] p-4 shadow-2xl mb-4 flex items-center justify-between cursor-pointer group"
-          onClick={() => handleAppClick("finder")}
+          drag="x"
+          dragConstraints={{ left: 0, right: 0 }}
+          dragElastic={0.25}
+          onDragEnd={(_, { offset, velocity }) => {
+            const swipe = offset.x;
+            const vel = velocity.x;
+            if ((swipe < -40 || vel < -300) && currentPage === 0) {
+              playClick();
+              setCurrentPage(1);
+            } else if ((swipe > 40 || vel > 300) && currentPage === 1) {
+              playClick();
+              setCurrentPage(0);
+            }
+          }}
+          animate={{ x: currentPage === 0 ? "0%" : "-50%" }}
+          transition={{ type: "spring", stiffness: 350, damping: 32 }}
+          className="flex w-[200%] h-full flex-1 touch-pan-y"
         >
-          <div className="flex items-center gap-3.5">
-            <div className="w-16 h-16 rounded-2xl overflow-hidden border-2 border-white/30 shadow-md ring-2 ring-blue-500/30 shrink-0">
-              <img src={ishaanPhoto} alt="Ishaan Jha" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
-            </div>
-            <div className="flex flex-col text-left">
-              <div className="flex items-center gap-1.5">
-                <span className="text-sm font-bold text-white">Ishaan Jha</span>
-                <span className="w-2 h-2 rounded-full bg-blue-500 inline-block" />
+          {/* ===================== PAGE 1 ===================== */}
+          <div className="w-1/2 h-full px-4 pt-2 pb-2 flex flex-col justify-between">
+            {/* Top iOS Smart Widget (Profile) */}
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="w-full bg-white/10 backdrop-blur-2xl border border-white/20 rounded-[2rem] p-4 shadow-2xl mb-4 flex items-center justify-between cursor-pointer group active:scale-[0.98] transition-transform"
+              onClick={() => handleAppClick("finder")}
+            >
+              <div className="flex items-center gap-3.5">
+                <div className="w-16 h-16 rounded-2xl overflow-hidden border-2 border-white/30 shadow-md ring-2 ring-blue-500/30 shrink-0">
+                  <img src={ishaanPhoto} alt="Ishaan Jha" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+                </div>
+                <div className="flex flex-col text-left">
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-sm font-bold text-white">Ishaan Jha</span>
+                    <span className="w-2 h-2 rounded-full bg-blue-500 inline-block" />
+                  </div>
+                  <span className="text-xs text-blue-300 font-medium">Founder Office @ Ecofone</span>
+                  <span className="text-[11px] text-white/60 mt-0.5">IIM-B ('28) · IIT-M ('28) · Setu</span>
+                </div>
               </div>
-              <span className="text-xs text-blue-300 font-medium">Founder Office @ Ecofone</span>
-              <span className="text-[11px] text-white/60 mt-0.5">IIM-B ('28) · IIT-M ('28) · Setu</span>
+
+              <div className="flex flex-col items-end text-right">
+                <span className="text-xs font-semibold text-emerald-400 flex items-center gap-1">
+                  <Sparkles size={11} /> Active
+                </span>
+                <span className="text-[10px] text-white/50 flex items-center gap-0.5 mt-1">
+                  <MapPin size={10} /> Bengaluru
+                </span>
+                <span className="text-[10px] text-white/40 mt-0.5">{dateStr}</span>
+              </div>
+            </motion.div>
+
+            {/* Page 1: 4x2 App Grid */}
+            <div className="grid grid-cols-4 gap-y-4 gap-x-2 content-start flex-1 py-1">
+              {page1Apps.map((app) => (
+                <motion.div
+                  key={`p1-${app.id}`}
+                  whileTap={{ scale: 0.88 }}
+                  onClick={() => handleAppClick(app.id)}
+                  className="flex flex-col items-center justify-center cursor-pointer group select-none"
+                >
+                  <div 
+                    className={`w-[3.6rem] h-[3.6rem] rounded-[1.3rem] flex items-center justify-center shadow-lg transition-transform duration-200 group-hover:scale-105 relative overflow-hidden ${app.bgClass}`}
+                  >
+                    <div className="absolute inset-x-0 top-0 h-1/2 bg-gradient-to-b from-white/20 to-transparent pointer-events-none" />
+                    <div className="relative z-10">{app.icon}</div>
+                  </div>
+
+                  <span className="text-white text-[11px] font-medium text-center mt-1.5 tracking-tight drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)] truncate max-w-[4.2rem]">
+                    {app.name}
+                  </span>
+                </motion.div>
+              ))}
             </div>
           </div>
 
-          <div className="flex flex-col items-end text-right">
-            <span className="text-xs font-semibold text-emerald-400 flex items-center gap-1">
-              <Sparkles size={11} /> Active
-            </span>
-            <span className="text-[10px] text-white/50 flex items-center gap-0.5 mt-1">
-              <MapPin size={10} /> Bengaluru
-            </span>
-            <span className="text-[10px] text-white/40 mt-0.5">{dateStr}</span>
+          {/* ===================== PAGE 2 ===================== */}
+          <div className="w-1/2 h-full px-4 pt-2 pb-2 flex flex-col justify-between">
+            {/* Top iOS Smart Widget (Leadership & Education) */}
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="w-full bg-gradient-to-r from-blue-950/80 via-purple-950/70 to-slate-900/80 backdrop-blur-2xl border border-white/20 rounded-[2rem] p-4 shadow-2xl mb-4 flex items-center justify-between cursor-pointer group active:scale-[0.98] transition-transform"
+              onClick={() => handleAppClick("notes")}
+            >
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 rounded-2xl bg-amber-500/20 border border-amber-500/30 flex items-center justify-center text-amber-400 shrink-0">
+                  <Award size={24} />
+                </div>
+                <div className="flex flex-col text-left">
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-xs font-bold text-white uppercase tracking-wider">Achievements</span>
+                  </div>
+                  <span className="text-xs text-amber-300 font-semibold">Winner — Big Bull (IIM-B)</span>
+                  <span className="text-[11px] text-white/70 mt-0.5">Winner — Money Matrix (IIT-M)</span>
+                </div>
+              </div>
+
+              <div className="flex flex-col items-end text-right">
+                <span className="text-[10px] text-cyan-300 font-mono bg-black/40 px-2.5 py-1 rounded-full border border-white/10">
+                  30-Member Lead
+                </span>
+                <span className="text-[10px] text-white/50 mt-1.5">Ecofone On-site</span>
+              </div>
+            </motion.div>
+
+            {/* Page 2: App Grid */}
+            <div className="grid grid-cols-4 gap-y-4 gap-x-2 content-start flex-1 py-1">
+              {page2Apps.map((app) => (
+                <motion.div
+                  key={`p2-${app.id}`}
+                  whileTap={{ scale: 0.88 }}
+                  onClick={() => handleAppClick(app.id)}
+                  className="flex flex-col items-center justify-center cursor-pointer group select-none"
+                >
+                  <div 
+                    className={`w-[3.6rem] h-[3.6rem] rounded-[1.3rem] flex items-center justify-center shadow-lg transition-transform duration-200 group-hover:scale-105 relative overflow-hidden ${app.bgClass}`}
+                  >
+                    <div className="absolute inset-x-0 top-0 h-1/2 bg-gradient-to-b from-white/20 to-transparent pointer-events-none" />
+                    <div className="relative z-10">{app.icon}</div>
+                  </div>
+
+                  <span className="text-white text-[11px] font-medium text-center mt-1.5 tracking-tight drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)] truncate max-w-[4.2rem]">
+                    {app.name}
+                  </span>
+                </motion.div>
+              ))}
+
+              {/* Quick Call / WhatsApp Shortcut App */}
+              <motion.a
+                href="tel:+918299147213"
+                whileTap={{ scale: 0.88 }}
+                onClick={() => playClick()}
+                className="flex flex-col items-center justify-center cursor-pointer group select-none"
+              >
+                <div className="w-[3.6rem] h-[3.6rem] rounded-[1.3rem] flex items-center justify-center shadow-lg transition-transform duration-200 group-hover:scale-105 relative overflow-hidden bg-gradient-to-br from-emerald-500 to-green-600">
+                  <div className="absolute inset-x-0 top-0 h-1/2 bg-gradient-to-b from-white/20 to-transparent pointer-events-none" />
+                  <PhoneCall size={26} className="text-white relative z-10" />
+                </div>
+                <span className="text-white text-[11px] font-medium text-center mt-1.5 tracking-tight drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)]">
+                  Call Ishaan
+                </span>
+              </motion.a>
+
+              {/* Quick Control Center Shortcut */}
+              <motion.div
+                whileTap={{ scale: 0.88 }}
+                onClick={() => {
+                  playClick();
+                  setShowControlCenter(true);
+                }}
+                className="flex flex-col items-center justify-center cursor-pointer group select-none"
+              >
+                <div className="w-[3.6rem] h-[3.6rem] rounded-[1.3rem] flex items-center justify-center shadow-lg transition-transform duration-200 group-hover:scale-105 relative overflow-hidden bg-gradient-to-br from-slate-700 to-slate-900 border border-white/20">
+                  <div className="absolute inset-x-0 top-0 h-1/2 bg-gradient-to-b from-white/20 to-transparent pointer-events-none" />
+                  <Radio size={26} className="text-white relative z-10" />
+                </div>
+                <span className="text-white text-[11px] font-medium text-center mt-1.5 tracking-tight drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)]">
+                  Controls
+                </span>
+              </motion.div>
+            </div>
           </div>
         </motion.div>
 
-        {/* iOS 4-Column App Grid */}
-        <div className="grid grid-cols-4 gap-y-4 gap-x-2 content-start flex-1 py-1">
-          {homeGridApps.map((app) => (
-            <motion.div
-              key={app.id}
-              whileTap={{ scale: 0.88 }}
-              onClick={() => handleAppClick(app.id)}
-              className="flex flex-col items-center justify-center cursor-pointer group select-none"
-            >
-              {/* iOS Squircle App Icon */}
-              <div 
-                className={`w-[3.6rem] h-[3.6rem] rounded-[1.3rem] flex items-center justify-center shadow-lg transition-transform duration-200 group-hover:scale-105 relative overflow-hidden ${app.bgClass}`}
-              >
-                {/* Subtle top gloss shine */}
-                <div className="absolute inset-x-0 top-0 h-1/2 bg-gradient-to-b from-white/20 to-transparent pointer-events-none" />
-                <div className="relative z-10">{app.icon}</div>
-              </div>
-
-              {/* iOS App Label */}
-              <span className="text-white text-[11px] font-medium text-center mt-1.5 tracking-tight drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)] truncate max-w-[4rem]">
-                {app.name}
-              </span>
-            </motion.div>
-          ))}
-        </div>
-
-        {/* Page Dots Indicator */}
-        <div className="flex items-center justify-center gap-1.5 py-2">
-          <div className="w-1.5 h-1.5 rounded-full bg-white shadow-sm" />
-          <div className="w-1.5 h-1.5 rounded-full bg-white/30" />
+        {/* Page Dots Indicator (Interactive Tap or Swipe) */}
+        <div className="flex items-center justify-center py-2 shrink-0">
+          <div className="bg-black/40 backdrop-blur-md px-3 py-1 rounded-full border border-white/10 flex items-center gap-2 cursor-pointer">
+            <button 
+              onClick={() => {
+                playClick();
+                setCurrentPage(0);
+              }}
+              className={`transition-all duration-300 ${currentPage === 0 ? "w-4 h-1.5 bg-white rounded-full shadow-sm" : "w-1.5 h-1.5 bg-white/40 rounded-full hover:bg-white/70"}`}
+              title="Screen 1"
+            />
+            <button 
+              onClick={() => {
+                playClick();
+                setCurrentPage(1);
+              }}
+              className={`transition-all duration-300 ${currentPage === 1 ? "w-4 h-1.5 bg-white rounded-full shadow-sm" : "w-1.5 h-1.5 bg-white/40 rounded-full hover:bg-white/70"}`}
+              title="Screen 2"
+            />
+          </div>
         </div>
       </div>
 
@@ -368,6 +607,94 @@ export default function IPhoneView({
         )}
       </AnimatePresence>
 
+      {/* ----------------- IPHONE NOTIFICATION CENTER OVERLAY ----------------- */}
+      <AnimatePresence>
+        {showNotificationCenter && (
+          <motion.div
+            initial={{ opacity: 0, y: "-100%" }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: "-100%" }}
+            transition={{ type: "spring", stiffness: 320, damping: 32 }}
+            className="fixed inset-0 z-[115] bg-black/80 backdrop-blur-3xl px-5 pt-7 pb-6 flex flex-col justify-between overflow-hidden"
+          >
+            {/* Lock Header */}
+            <div className="flex flex-col items-center">
+              <div className="flex items-center gap-1.5 text-white/70 text-xs font-semibold mb-3">
+                <Lock size={13} />
+                <span>Notification Center</span>
+              </div>
+              <h2 className="text-6xl font-light tracking-tight text-white">{timeStr}</h2>
+              <p className="text-sm text-white/80 font-medium mt-1">{fullDateStr}</p>
+            </div>
+
+            {/* Notification Cards List */}
+            <div className="flex-1 overflow-y-auto custom-scrollbar py-5 space-y-3">
+              <div className="flex items-center justify-between text-xs text-white/60 px-1">
+                <span className="font-semibold uppercase tracking-wider text-[10px]">Recent Notifications</span>
+                <span className="text-[11px] text-blue-400 cursor-pointer">Clear</span>
+              </div>
+
+              {notifications.map((notif) => (
+                <motion.div
+                  key={notif.id}
+                  initial={{ opacity: 0, y: 15 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="bg-white/10 border border-white/15 rounded-2xl p-3.5 backdrop-blur-xl shadow-lg flex flex-col gap-1.5"
+                >
+                  <div className="flex items-center justify-between text-xs text-white/70">
+                    <div className="flex items-center gap-1.5 font-bold text-white">
+                      <span className="text-sm">{notif.icon}</span>
+                      <span>{notif.app}</span>
+                    </div>
+                    <span className="text-[10px] text-white/50">{notif.time}</span>
+                  </div>
+                  <div>
+                    <h4 className="text-xs font-bold text-white leading-tight">{notif.title}</h4>
+                    <p className="text-xs text-white/80 leading-relaxed mt-0.5">{notif.desc}</p>
+                  </div>
+                </motion.div>
+              ))}
+            </div>
+
+            {/* Bottom Quick Tools (Flashlight & Camera) */}
+            <div className="flex items-center justify-between px-3 pt-2">
+              <button
+                onClick={() => {
+                  playClick();
+                  setFlashlightOn(!flashlightOn);
+                }}
+                className={`w-12 h-12 rounded-full flex items-center justify-center transition-all ${flashlightOn ? "bg-white text-black shadow-[0_0_20px_rgba(255,255,255,0.8)]" : "bg-white/15 text-white hover:bg-white/25"}`}
+                title="Flashlight"
+              >
+                <Flashlight size={20} />
+              </button>
+
+              {/* Close notification center bar */}
+              <div 
+                onClick={() => {
+                  playClick();
+                  setShowNotificationCenter(false);
+                }}
+                className="w-36 h-1 bg-white/70 rounded-full cursor-pointer hover:bg-white"
+                title="Swipe up to dismiss"
+              />
+
+              <button
+                onClick={() => {
+                  playClick();
+                  setShowNotificationCenter(false);
+                  onOpenApp("photos");
+                }}
+                className="w-12 h-12 rounded-full bg-white/15 hover:bg-white/25 text-white flex items-center justify-center transition-colors"
+                title="Open Photos"
+              >
+                <Camera size={20} />
+              </button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* ----------------- IPHONE CONTROL CENTER OVERLAY ----------------- */}
       <AnimatePresence>
         {showControlCenter && (
@@ -376,14 +703,17 @@ export default function IPhoneView({
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: "-100%" }}
             transition={{ type: "spring", stiffness: 300, damping: 30 }}
-            className="fixed inset-0 z-[110] bg-black/70 backdrop-blur-3xl p-5 flex flex-col justify-between"
+            className="fixed inset-0 z-[116] bg-black/75 backdrop-blur-3xl p-5 flex flex-col justify-between"
           >
             {/* Top Bar with Close */}
             <div className="flex items-center justify-between mb-4">
               <span className="font-bold text-base text-white">Control Center</span>
               <button 
-                onClick={() => setShowControlCenter(false)}
-                className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center text-white"
+                onClick={() => {
+                  playClick();
+                  setShowControlCenter(false);
+                }}
+                className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center text-white hover:bg-white/20 transition-colors"
               >
                 <X size={18} />
               </button>
@@ -471,8 +801,11 @@ export default function IPhoneView({
 
             {/* Close swipe bar at bottom */}
             <div 
-              onClick={() => setShowControlCenter(false)}
-              className="w-36 h-1 bg-white/60 rounded-full mx-auto cursor-pointer" 
+              onClick={() => {
+                playClick();
+                setShowControlCenter(false);
+              }}
+              className="w-36 h-1 bg-white/60 rounded-full mx-auto cursor-pointer hover:bg-white" 
             />
           </motion.div>
         )}
