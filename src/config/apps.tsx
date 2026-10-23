@@ -6,7 +6,7 @@ export interface AppConfig {
   name: string;
   icon: ReactNode;
   bgClass: string;
-  inDock: boolean; // true = keep in dock on mobile, false = show on desktop
+  inDock: boolean; // true = show in dock on desktop/mobile
 }
 
 export const APPS_CONFIG: AppConfig[] = [
@@ -15,6 +15,25 @@ export const APPS_CONFIG: AppConfig[] = [
     name: "About Me", 
     icon: <Smile size={28} className="text-white" />,
     bgClass: "bg-gradient-to-br from-blue-400 to-blue-600",
+    inDock: true
+  },
+  {
+    id: "photos",
+    name: "Photos",
+    icon: (
+      <svg viewBox="0 0 100 100" width="30" height="30" className="drop-shadow-sm">
+        <circle cx="50" cy="50" r="14" fill="#FFCC00" />
+        <ellipse cx="50" cy="24" rx="9" ry="17" fill="#FF3B30" opacity="0.9" />
+        <ellipse cx="68" cy="32" rx="9" ry="17" fill="#FF9500" opacity="0.9" transform="rotate(45 68 32)" />
+        <ellipse cx="76" cy="50" rx="9" ry="17" fill="#FFCC00" opacity="0.9" transform="rotate(90 76 50)" />
+        <ellipse cx="68" cy="68" rx="9" ry="17" fill="#34C759" opacity="0.9" transform="rotate(135 68 68)" />
+        <ellipse cx="50" cy="76" rx="9" ry="17" fill="#007AFF" opacity="0.9" />
+        <ellipse cx="32" cy="68" rx="9" ry="17" fill="#5856D6" opacity="0.9" transform="rotate(45 32 68)" />
+        <ellipse cx="24" cy="50" rx="9" ry="17" fill="#AF52DE" opacity="0.9" transform="rotate(90 24 50)" />
+        <ellipse cx="32" cy="32" rx="9" ry="17" fill="#FF2D55" opacity="0.9" transform="rotate(135 32 32)" />
+      </svg>
+    ),
+    bgClass: "bg-white shadow-sm border border-gray-100",
     inDock: true
   },
   { 
@@ -36,7 +55,7 @@ export const APPS_CONFIG: AppConfig[] = [
     name: "Mail",
     icon: <Mail size={28} className="text-white" />,
     bgClass: "bg-gradient-to-br from-cyan-400 to-blue-500",
-    inDock: true
+    inDock: false
   },
   {
     id: "skills",

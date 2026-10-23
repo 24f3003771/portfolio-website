@@ -1,4 +1,5 @@
 import { Users, Star, GitBranch, BookOpen } from "lucide-react";
+import ishaanPhoto from "../assets/ishaan.jpg";
 
 export default function GithubApp() {
   return (
@@ -8,12 +9,9 @@ export default function GithubApp() {
         {/* Sidebar */}
         <div className="flex flex-col gap-4 md:w-1/4 shrink-0">
           <img 
-            src="https://github.com/24f3003771.png" 
-            onError={(e) => {
-              (e.target as HTMLImageElement).src = "https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png";
-            }}
+            src={ishaanPhoto} 
             alt="Ishaan Jha"
-            className="w-48 h-48 rounded-full border border-[#30363d] z-10 relative object-cover"
+            className="w-48 h-48 rounded-full border-2 border-blue-500/30 z-10 relative object-cover shadow-xl"
           />
           <div>
             <h1 className="text-2xl font-bold text-white">Ishaan Jha</h1>

@@ -40,10 +40,10 @@ export default function WelcomeTerminal() {
               </p>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-2 pt-2 border-t border-white/10 text-white/80">
                 <div>
-                  <span className="text-purple-400 font-bold">🎓 Education:</span> BBA @ IIM Bangalore | BS @ IIT Madras
+                  <span className="text-purple-400 font-bold">🎓 Education:</span> BBA @ IIM-B (2025–28) | BS @ IIT-M (2024–28)
                 </div>
                 <div>
-                  <span className="text-blue-400 font-bold">💼 Focus:</span> Business Strategy, Data Science & Tech
+                  <span className="text-blue-400 font-bold">💼 Role:</span> Founder Office @ Ecofone | Project Associate @ Setu
                 </div>
               </div>
             </div>
@@ -110,8 +110,9 @@ export default function WelcomeTerminal() {
         responseContent = (
           <div className="text-xs sm:text-sm font-mono text-gray-200 space-y-2 py-1">
             <p className="text-cyan-300 font-bold">👤 Ishaan Jha</p>
-            <p>Student entrepreneur & builder pursuing BBA at IIM Bangalore and BS in Data Science at IIT Madras.</p>
-            <p className="text-gray-400">Passionate about AI-directed development, growth strategy, and digital business creation.</p>
+            <p>Founder Office @ Ecofone (On-site) | Project Associate @ Setu (Hundred Plus)</p>
+            <p>BBA @ Indian Institute of Management Bangalore (2025–2028) | BS @ IIT Madras (2024–2028)</p>
+            <p className="text-gray-400">Directing tech, sales and marketing teams while shipping 0→1 products using AI-Assisted workflows.</p>
           </div>
         );
         break;
@@ -120,8 +121,8 @@ export default function WelcomeTerminal() {
         responseContent = (
           <div className="text-xs sm:text-sm font-mono text-gray-200 space-y-2 py-1">
             <p className="text-emerald-400 font-bold">🛠️ Skills & Expertise:</p>
-            <p><span className="text-purple-300">Business & Strategy:</span> Digital Marketing, SEO, Social Media Analytics, Cold Email & Lead Gen, Apollo.io, Sales Automation</p>
-            <p><span className="text-blue-300">Data & Tech:</span> Python (Pandas/NumPy), SQL, Advanced Excel, Next.js, Node.js, PostgreSQL, REST APIs</p>
+            <p><span className="text-purple-300">Business & Strategy:</span> Team Leadership (30-member team), Cross-Functional Ops, Business Modelling, Revenue Strategy, Digital Marketing, SEO, Social Media Analytics, Cold Email & Lead Gen, Sales Automation, Apollo.io, LinkedIn Sales Navigator, Canva (Advanced), Scriptwriting</p>
+            <p><span className="text-blue-300">Data & Tech:</span> Python, SQL, CLI, Google Workspace, Supabase, AWS (Cost Optimisation & Startup Credits), Next.js, Node.js, PostgreSQL, REST APIs, AI-Directed Dev (Claude, Cursor, Antigravity, OpenClaw, GLM)</p>
           </div>
         );
         break;
@@ -129,10 +130,15 @@ export default function WelcomeTerminal() {
       case "experience":
         responseContent = (
           <div className="text-xs sm:text-sm font-mono text-gray-200 space-y-2 py-1">
-            <p className="text-yellow-300 font-bold">🏆 Key Achievements & Milestones:</p>
-            <p>• Shipped <span className="text-white font-semibold">Nova Unplugged 0</span> to production in &lt;48 hours</p>
-            <p>• <span className="text-emerald-400">Winner</span> - Big Bull (Finance Simulation, IIM Bangalore)</p>
-            <p>• <span className="text-emerald-400">Winner</span> - Money Matrix Case Competition (IIT Madras)</p>
+            <p className="text-yellow-300 font-bold">💼 Professional Experience:</p>
+            <p>• <span className="text-white font-semibold">Ecofone:</span> Founder Office (Mid-Sep 2026 – Present) — Lead 30-member team, cut AWS costs ~₹3k/mo, built GST billing software, redesigned website.</p>
+            <p>• <span className="text-white font-semibold">Hundred Plus (Setu):</span> Project Associate (Sep 2026 – Present) & Founder Office Intern (Feb 2026 – Sep 2026) — 0→1 LMS, 5+ startup tools, $1,000 AWS credits, 2k+ records, 3 events.</p>
+            <p>• <span className="text-white font-semibold">Feeding Trends:</span> Social Media Intern (Nov 2025 – Jan 2026) — IGLP campaign growth.</p>
+            <p>• <span className="text-white font-semibold">TradeVed:</span> Growth & Marketing Intern (Aug 2025 – Oct 2025) — 20k+ interactions.</p>
+            <p className="text-yellow-300 font-bold pt-1">🏆 Awards & Recognition:</p>
+            <p>• Winner — Big Bull (Finance Simulation), Nova '25, IIM Bangalore</p>
+            <p>• 2nd Runner-Up — Illusion Inc (Deceptive Strategy), Nova '25, IIM Bangalore</p>
+            <p>• Winner — Money Matrix Case Competition, Saavan '25, IIT Madras</p>
           </div>
         );
         break;
@@ -141,9 +147,10 @@ export default function WelcomeTerminal() {
         responseContent = (
           <div className="text-xs sm:text-sm font-mono text-gray-200 space-y-2 py-1">
             <p className="text-cyan-300 font-bold">🚀 Featured Projects:</p>
-            <p>1. <span className="text-yellow-300 font-bold">DBE-OS</span> - Digital Business Ecosystem (dbeos.in)</p>
-            <p>2. <span className="text-yellow-300 font-bold">Nova Unplugged</span> - Live Event Platform (nova-unplugged.dbeos.in)</p>
-            <p className="text-gray-400 text-xs">Tip: Click their desktop or dock icons to open live preview windows!</p>
+            <p>1. <span className="text-yellow-300 font-bold">Nova Unplugged:</span> Event platform shipped in &lt;48h, 500+ users, Google ranked (nova-unplugged.dbeos.in)</p>
+            <p>2. <span className="text-yellow-300 font-bold">DBE-OS:</span> Gamified platform for 3,000+ IIM-B students with 6+ tools (dbeos.in)</p>
+            <p>3. <span className="text-yellow-300 font-bold">Ecofone Billing Software:</span> Enterprise-grade GST-compliant invoicing system</p>
+            <p>4. <span className="text-yellow-300 font-bold">Cosmologia 3D:</span> 3D celestial observatory with real-time AR holographic view</p>
           </div>
         );
         break;
@@ -152,6 +159,7 @@ export default function WelcomeTerminal() {
         responseContent = (
           <div className="text-xs sm:text-sm font-mono text-gray-200 space-y-1 py-1">
             <p className="text-purple-300 font-bold">📬 Get in Touch:</p>
+            <p>• Phone: <a href="tel:+918299147213" className="text-emerald-400 underline">+91 82991 47213</a></p>
             <p>• Email: <a href="mailto:ishaanjha.in@gmail.com" className="text-blue-400 underline">ishaanjha.in@gmail.com</a></p>
             <p>• LinkedIn: <a href="https://linkedin.com/in/ishaanjha-2b6977340" target="_blank" rel="noreferrer" className="text-blue-400 underline">linkedin.com/in/ishaanjha-2b6977340</a></p>
             <p>• GitHub: <a href="https://github.com/24f3003771" target="_blank" rel="noreferrer" className="text-blue-400 underline">github.com/24f3003771</a></p>
