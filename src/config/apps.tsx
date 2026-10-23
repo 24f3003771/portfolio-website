@@ -253,5 +253,18 @@ export const APPS_CONFIG: AppConfig[] = [
     ),
     bgClass: "bg-gradient-to-br from-indigo-950 via-slate-900 to-black border border-cyan-500/30 shadow-md",
     inDock: false
+  },
+  {
+    id: "setu",
+    name: "Setu School",
+    icon: (
+      <img 
+        src="/setu-icon.png" 
+        alt="Setu Startup School" 
+        className="w-full h-full object-contain p-1 rounded-[1.1rem] select-none" 
+      />
+    ),
+    bgClass: "bg-[#0B1120] p-0.5 shadow-md border border-purple-500/30",
+    inDock: false
   }
 ];
